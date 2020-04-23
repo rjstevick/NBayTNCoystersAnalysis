@@ -50,6 +50,5 @@ This folder contains all the processed data files and scripts to reproduce the f
 - 16S rRNA taxonomy results
 - LefSe analysis results for the 16S rRNA taxa at the order level
 - Metatranscriptomic annotation taxonomy results with RefSeq
-- Metatranscriptomic annotation taxonomy results with Kraken (_RefSeq is used in the publication since we obtained higher annotation rates_)
 
 
