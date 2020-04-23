@@ -1,12 +1,11 @@
 # Analysis bash scripts, processed data files, and R scripts for *Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary*
 ## Code written by Rebecca Stevick, URI-GSO (contact: rstevick@gmail.com)
-### Collaborators: Anton F. Post and Marta GÃ³mez-Chiarri.
+### Collaborators: Anton F. Post and Marta Gómez-Chiarri.
+
+### This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635.
 
 ### To cite this work: 
 Stevick, R. J. (2019). Oyster-Associated Microbial Community Dynamics (Doctoral dissertation, University of Rhode Island).
-
-## This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. 
-The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635.
 
 ## Contents:
 ### MetatranscriptomeAnalysis
