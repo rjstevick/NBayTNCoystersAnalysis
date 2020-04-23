@@ -2,7 +2,7 @@
 ## Code written by Rebecca Stevick, URI-GSO (contact: rstevick@gmail.com)
 ### Collaborators: Anton F. Post and Marta Gómez-Chiarri
 
-### This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635.
+### This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635 (reviewer link: https://dataview.ncbi.nlm.nih.gov/object/PRJNA598635?reviewer=5g8ftj52399ut5ujmj7v7t0hh8).
 
 ### To cite this work: 
 Stevick, R. J. (2019). Oyster-Associated Microbial Community Dynamics (Doctoral dissertation, University of Rhode Island).
