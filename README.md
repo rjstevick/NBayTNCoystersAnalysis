@@ -16,7 +16,7 @@ This folder contains scripts used to perform modified SAMSA2 analysis on the met
 This folder contains scripts used to perform QIIME2 analysis on the 16S rRNA amplicon data.
 
 ### TNCpaper_ScriptsData
-This folder contains all the processed data files and scripts to reproduce the figures and statistics in the manuscript.
+This folder contains all the processed data files and scripts to reproduce the figures and statistics in the manuscript. Each script is named for the figures it creates. All statistical analyses and plotting commands are included. 
 #### Function
 1. DeSeq2 results for level-2 SEED functional annnotation of metatranscriptomes (each station vs. mean)
 2. DeSeq2 results for level-3 SEED functional annnotation of metatranscriptomes (each station vs. mean)
@@ -29,7 +29,6 @@ This folder contains all the processed data files and scripts to reproduce the f
 1. 16S rRNA taxonomy results
 2. LefSe analysis results for the 16S rRNA taxa at the order level
 3. Metatranscriptomic annotation taxonomy results with RefSeq
-4. Metatranscriptomic annotation taxonomy results with Kraken (_RefSeq is used in the publication since we obtained higher annotation rates_)
-#### Rscripts
-Each script is named for the figures it creates. All statistical analyses and plotting commands are included. 
+4. Metatranscriptomic annotation taxonomy results with Kraken (_RefSeq is used in the publication since we obtained higher annotation rates_
+
 
