@@ -24,7 +24,7 @@ This folder contains all the processed data files and scripts to reproduce the f
 3. DeSeq2 results for level-4 SEED functional annnotation of metatranscriptomes (each station vs. mean)
 4. DeSeq2 results for SEED functional annnotation of metatranscriptomes (North vs. South)
 #### Metadata
-1. Folder containing mapping files to creat Figure 1
+1. Folder containing mapping files to create Figure 1
 2. Metadata spreadsheet with oyster and environmental measurements
 #### Taxonomy
 1. 16S rRNA taxonomy results
