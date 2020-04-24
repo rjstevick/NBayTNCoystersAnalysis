@@ -13,6 +13,11 @@ library(tidyr)
 library(RColorBrewer)
 library(ggpubr)
 library(readxl)
+<<<<<<< HEAD
+=======
+library(vegan)
+
+>>>>>>> 4bcdb1d... first commit
 
 data<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=2)
 taxakey<- read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=3)
@@ -298,7 +303,10 @@ Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
           "4.NAR","4.NAR","4.NAR","4.NAR","4.NAR", 
           "5.NIN","5.NIN","5.NIN","5.NIN","5.NIN")
 
+<<<<<<< HEAD
 library(vegan)
+=======
+>>>>>>> 4bcdb1d... first commit
 theme_set(theme_bw())
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
 {
@@ -404,6 +412,7 @@ cowplot::plot_grid(metatranssp, metatransord+theme(legend.position="none"),
 ### Metatranscriptome Rarefaction curve - Figure S1 ----------------------------------------------
 ####
 
+<<<<<<< HEAD
 
 # GET FILE NAMES
 files <- rev(list.files(path="RefSeq_rawFiles/",full.names = T, recursive = FALSE))
@@ -427,6 +436,10 @@ for (x in files) {
 }
 
 data_table[is.na(data_table)] <- 0
+=======
+# Load in the raw annotation data
+data_table<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet="refseqspecies")
+>>>>>>> 4bcdb1d... first commit
 
 # Make into table
 datamatt<-data_table %>%
