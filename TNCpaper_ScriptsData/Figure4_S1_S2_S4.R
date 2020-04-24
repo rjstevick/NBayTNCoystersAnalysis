@@ -13,11 +13,8 @@ library(tidyr)
 library(RColorBrewer)
 library(ggpubr)
 library(readxl)
-<<<<<<< HEAD
-=======
 library(vegan)
 
->>>>>>> 4bcdb1d... first commit
 
 data<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=2)
 taxakey<- read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=3)
@@ -303,10 +300,7 @@ Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
           "4.NAR","4.NAR","4.NAR","4.NAR","4.NAR", 
           "5.NIN","5.NIN","5.NIN","5.NIN","5.NIN")
 
-<<<<<<< HEAD
 library(vegan)
-=======
->>>>>>> 4bcdb1d... first commit
 theme_set(theme_bw())
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
 {
@@ -412,34 +406,8 @@ cowplot::plot_grid(metatranssp, metatransord+theme(legend.position="none"),
 ### Metatranscriptome Rarefaction curve - Figure S1 ----------------------------------------------
 ####
 
-<<<<<<< HEAD
-
-# GET FILE NAMES
-files <- rev(list.files(path="RefSeq_rawFiles/",full.names = T, recursive = FALSE))
-print(files)
-file_names<-meta$Sample
-# loading the files in
-y <- 0
-for (x in files) {
-  y <- y + 1
-  if (y == 1) {
-    data_table <- read.table(file = x, header = F, quote = "", sep = "\t", fill = TRUE)
-    z <- paste(x,"_reads")
-    colnames(data_table) = c(x, z, "Taxa")
-  }
-  if (y > 1) {
-    temp_table <- read.table(file = x, header = F, quote = "", sep = "\t", fill = TRUE)
-    z<-paste(x,"_reads")
-    colnames(temp_table) = c(x, z, "Taxa")
-    data_table <- full_join(temp_table, data_table, all=T)
-  }
-}
-
-data_table[is.na(data_table)] <- 0
-=======
 # Load in the raw annotation data
 data_table<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet="refseqspecies")
->>>>>>> 4bcdb1d... first commit
 
 # Make into table
 datamatt<-data_table %>%
