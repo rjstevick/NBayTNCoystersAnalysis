@@ -1,5 +1,5 @@
 ## MetatranscriptomeAnalysis
-This folder contains scripts used to perform modified SAMSA2 analysis on the metatranscriptomic data. The raw sequences generated for this study can be found in the NCBI SRA under BioProject no. PRJNA598635. See `PRJNA598635_NCBI_info.xlsx` for accession numbers for each sample.
+This folder contains scripts used to perform modified SAMSA2 analysis on the metatranscriptomic data. The raw sequences generated for this study can be found in the NCBI SRA under BioProject no. PRJNA598635. See [`PRJNA598635_NCBI_info.xlsx`](/PRJNA598635_NCBI_info.xlsx) for accession numbers for each sample.
 
 #### 1. Bash Scripts
 - Main modified SAMSA2 script (masterscript*.sh)

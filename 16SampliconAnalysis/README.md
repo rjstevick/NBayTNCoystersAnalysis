@@ -1,5 +1,5 @@
 ## 16SampliconAnalysis
-This folder contains scripts used to perform QIIME2 analysis on the 16S rRNA amplicon data. The raw sequences generated for this study can be found in the NCBI SRA under BioProject no. PRJNA598635. See `PRJNA598635_NCBI_info.xlsx` for accession numbers for each sample.
+This folder contains scripts used to perform QIIME2 analysis on the 16S rRNA amplicon data. The raw sequences generated for this study can be found in the NCBI SRA under BioProject no. PRJNA598635. See [`PRJNA598635_NCBI_info.xlsx`](/PRJNA598635_NCBI_info.xlsx) for accession numbers for each sample.
 
 **Software used:** QIIME2 v2018.4 and R v3.4.1
 
