@@ -320,7 +320,10 @@ rownames(abund_tablesp)<-abund_tablesp$Sample
 abund_tablesp$Sample<-NULL
 
 sol<-metaMDS(abund_tablesp,distance = "bray", k = 2, trymax = 50)
+sol$stress
 stressplot(sol)
+# stress=0.0825, R2=0.993
+
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2], Site)
 plot.new()
 ord<-ordiellipse(sol, as.factor(Site), display = "sites", kind ="sd", conf = 0.95, label = T)
@@ -361,7 +364,10 @@ rownames(abund_tableord)<-abund_tableord$Sample
 abund_tableord$Sample<-NULL
 
 sol<-metaMDS(abund_tableord,distance = "bray", k = 2, trymax = 50)
+sol$stress
 stressplot(sol)
+# stress=0.075, R2=0.994
+
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2], Site)
 plot.new()
 ord<-ordiellipse(sol, as.factor(Site), display = "sites", kind ="sd", conf = 0.95, label = T)

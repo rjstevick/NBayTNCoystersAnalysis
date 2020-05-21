@@ -258,7 +258,10 @@ meta_table<-dataag_gut
 
 grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
 sol<-metaMDS(abund_table,distance = "bray", k = 2, trymax = 50)
-stressplot(sol) # R2 = 0.964
+sol$stress
+stressplot(sol)
+# stress=0.19, R2=0.96
+
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
 plot.new()
 ord<-ordiellipse(sol, as.factor(grouping_info[,2]), display = "sites", kind ="sd", conf = 0.95, label = T)
@@ -292,7 +295,10 @@ meta_table<-metadatags
 
 grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
 sol<-metaMDS(abund_table,distance = "bray", k = 2, trymax = 50)
-stressplot(sol) # R2 = 0.964
+sol$stress
+stressplot(sol)
+# stress=0.19, R2=0.96
+
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),
                 Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
 plot.new()
