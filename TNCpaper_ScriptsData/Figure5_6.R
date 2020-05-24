@@ -5,7 +5,7 @@
 # updated 4/16/2020 for resubmission
 
 # Metaranscriptomic functional data at pathway levels
-# Subset for stress ressponse, nitrogen and phosphorus metabolism
+# Subset for stress response, nitrogen and phosphorus metabolism
 
 
 library("ggplot2")
@@ -27,7 +27,7 @@ hierarchy<-read_xlsx("Function/Subsystems_DESeq_results_NvsS.xlsx", sheet="hiera
 
 
 # add in some stars
-data1$signif<-ifelse(data1$padj <=0.01, "**", 
+data1$signif<-ifelse(data1$padj <=0.01, "**",
                      ifelse(data1$padj <=0.05, "*",
                             ifelse("ns")))
 data1sig<-filter(data1, padj<=0.05)
@@ -51,7 +51,7 @@ ggplot(data1sig, aes(Level1, log2FoldChange,fill=log2FoldChange))+
         legend.text = element_text(size=10, color="grey20"), legend.key.width = unit(2, "cm"),
         legend.title = element_text(size=14, color="grey40"))+
   scale_fill_gradientn(limits=c(-2.5,2.5),colours=c("#0571b0","#92c5de","#f4a582","#ca0020"))+
-  geom_errorbar(aes(ymin=log2FoldChange-lfcSE, ymax=log2FoldChange+lfcSE), 
+  geom_errorbar(aes(ymin=log2FoldChange-lfcSE, ymax=log2FoldChange+lfcSE),
                 size=0.8,width = 0, color="grey60") +
   geom_hline(yintercept=0, color="grey20")+coord_flip()
 
@@ -71,10 +71,10 @@ datasiggp<-gather(datasig, padj, padjvalue, "pvd_padj","gb_padj","bis_padj","nar
 datasigg$padj<-datasiggp$padj
 datasigg$padjvalue<-datasiggp$padjvalue
 
-datasigg$foldchange = factor(datasigg$foldchange, 
+datasigg$foldchange = factor(datasigg$foldchange,
                              levels = c("pvd_log2FoldChange","gb_log2FoldChange","bis_log2FoldChange","nar_log2FoldChange","nin_log2FoldChange"))
 datasigg$padjvalue<-as.numeric(datasigg$padjvalue)
-datasigg$signif<-ifelse(datasigg$padjvalue <=0.01, "**", 
+datasigg$signif<-ifelse(datasigg$padjvalue <=0.01, "**",
                         ifelse(datasigg$padjvalue <=0.05, "*",
                                ifelse("ns")))
 datasiggpe<-gather(datasig, folderror, errorvalue, "pvd_lfcSE","gb_lfcSE","bis_lfcSE","nar_lfcSE","nin_lfcSE")
@@ -92,11 +92,11 @@ datasigg$foldstar[datasigg$foldvalue > 0] <- 0.05+datasigg$errorvalue
 ggplot(datasigg, aes(Subsystem, foldvalue,fill=foldchange))+
 
   geom_col(position = "dodge")+
-  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue), 
+  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue),
                 size=0.8,position = position_dodge(width=0.9), width = 0, color="grey50")+
   labs(x=NULL, y=NULL)+scale_x_discrete(expand=c(0,0))+
   facet_grid(.~Subsystem, scales="free",space="free")+
-  theme(axis.text.y = element_text(size=20, color="grey40"), 
+  theme(axis.text.y = element_text(size=20, color="grey40"),
         axis.text.x = element_blank(),strip.background = element_rect(fill="white", color="white"),
         strip.text = element_text(size=20, color="black"),
         legend.position = "none")+
@@ -123,7 +123,7 @@ datasigg$padjvalue<-as.numeric(datasigg$padjvalue)
 datasigg$signif<-ifelse(datasigg$padjvalue <=0.01, "**",
                               ifelse(datasigg$padjvalue <=0.05, "*",ifelse("ns")))
 
-datasigg$foldchange = factor(datasigg$foldchange, 
+datasigg$foldchange = factor(datasigg$foldchange,
                             levels = c("pvd_log2FoldChange","gb_log2FoldChange","bis_log2FoldChange","nar_log2FoldChange","nin_log2FoldChange"))
 
 data3gpfpe<-gather(data, folderror, errorvalue, "pvd_lfcSE","gb_lfcSE","bis_lfcSE","nar_lfcSE","nin_lfcSE")
@@ -140,9 +140,9 @@ hierarhcysimp3$Level4<-NULL
 hierarhcysimp3<-unique(hierarhcysimp3)
 data3gpf<-full_join(datasigg, unique(hierarhcysimp3), by=c("Level3"))
 
-data3gpfselect<-filter(data3gpf, 
+data3gpfselect<-filter(data3gpf,
                        Level1=="Phosphorus Metabolism" | Level1=="Nitrogen Metabolism")
-data3gpfselect$Level3o<-factor(data3gpfselect$Level3, 
+data3gpfselect$Level3o<-factor(data3gpfselect$Level3,
                            levels=c("Nitric_oxide_synthase",
                                     "Allantoin_Utilization",
                                     "Amidase_clustered_with_urea_and_nitrile_hydratase_functions",
@@ -184,15 +184,15 @@ sub<-
                              "#c2a5cf","#9970ab","#762a83","#40004b"))+
   geom_hline(yintercept=0, color="navy")+labs(x=NULL, y=NULL)+
   scale_y_continuous(limits=c(-2,2),labels = scales::number_format(accuracy=.1))+
-  theme(axis.text.y = element_text(size=20, color="grey40"), 
+  theme(axis.text.y = element_text(size=20, color="grey40"),
         legend.position = "none",
         strip.background = element_blank(), strip.text = element_blank(),
         axis.text.x = element_blank(),
         panel.border = element_rect(color="grey80", fill=NA),
-        axis.ticks.length = unit(0.2, "cm"), 
+        axis.ticks.length = unit(0.2, "cm"),
         axis.ticks.y = element_line(color="grey60"),
         axis.ticks.x = element_blank())+
-  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue, color=Level3o), 
+  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue, color=Level3o),
                 size=0.8,position = position_dodge(width=0.9), width = 0)
 
 
@@ -210,10 +210,10 @@ datasigg<-gather(data, foldchange, foldvalue, "pvd_log2FoldChange","gb_log2FoldC
 datasiggp<-gather(data, padj, padjvalue, "pvd_padj","gb_padj","bis_padj","nar_padj","nin_padj")
 datasigg$padjvalue<-datasiggp$padjvalue
 
-datasigg$foldchange = factor(datasigg$foldchange, 
+datasigg$foldchange = factor(datasigg$foldchange,
                              levels = c("pvd_log2FoldChange","gb_log2FoldChange","bis_log2FoldChange","nar_log2FoldChange","nin_log2FoldChange"))
 datasigg$padjvalue<-as.numeric(datasigg$padjvalue)
-datasigg$signif<-ifelse(datasigg$padjvalue <=0.01, "**", 
+datasigg$signif<-ifelse(datasigg$padjvalue <=0.01, "**",
                         ifelse(datasigg$padjvalue <=0.05, "*",
                                ifelse("ns")))
 
@@ -224,7 +224,7 @@ datasigg$errorvalue<-data3gpfpe$errorvalue
 
 
 
-datasiggselect<-filter(datasigg, 
+datasiggselect<-filter(datasigg,
                        Subsystem=="Phosphorus Metabolism" | Subsystem=="Nitrogen Metabolism")
 
 ########################################################
@@ -234,13 +234,13 @@ nitphos<- ggplot(datasiggselect, aes(Subsystem, foldvalue,fill=foldchange))+
   scale_x_discrete(expand=c(0,0))+theme_minimal()+
   scale_y_continuous(labels = scales::number_format(accuracy=.1))+
   labs(x=NULL, y=NULL)+facet_grid(.~Subsystem+foldchange, scales="free",space="free")+
-  theme(axis.text.y = element_text(size=20, color="grey40"), 
+  theme(axis.text.y = element_text(size=20, color="grey40"),
         axis.text.x = element_blank(),strip.background = element_rect(fill="white"),
         strip.text = element_blank(),axis.ticks.x = element_blank(),
         legend.position = "none", axis.ticks.length = unit(0.2, "cm"), axis.ticks.y = element_line(color="grey60"))+
   geom_hline(yintercept=0, color="navy")+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
-  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue), 
+  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue),
                 size=0.8,position = position_dodge(width=0.9), width = 0, color="grey60")
 
 
@@ -249,5 +249,3 @@ nitphos<- ggplot(datasiggselect, aes(Subsystem, foldvalue,fill=foldchange))+
 cowplot::plot_grid(nitphos,sub,nrow=2, align="hv", axis="lr", rel_heights = c(2,5))
 #1500x800
 # add legend and labels in Inkscape
-
-
