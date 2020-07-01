@@ -1,11 +1,10 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Compare taxonomy generated from RefSeq/metatranscriptomes and 16S data
-# Figures 4, S1 S2, and S4 in the publication
+# Figures 4, S2, S3, and S5 in the publication
 # updated 4/16/2020 for resubmission
 
 # Metaranscriptomic taxonomy data
 # 16S Amplicon data at order level
-
 
 library(ggplot2)
 library(dplyr)
@@ -14,7 +13,6 @@ library(RColorBrewer)
 library(ggpubr)
 library(readxl)
 library(vegan)
-
 
 data<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=2)
 taxakey<- read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=3)
@@ -40,7 +38,7 @@ condenseddataord<-datatax %>% select(Sample, Order, Percent, SampleType) %>%
 dataordtab<-spread(condenseddataord, Order, PercentSum) %>%
   column_to_rownames("Sample")
 
-
+# make a ginormous palette
 palette<-c(brewer.pal(12, "Set3"),brewer.pal(8, "Set2"),brewer.pal(12, "Set3"),
            brewer.pal(12, "Set3"),brewer.pal(8, "Set2"),brewer.pal(12, "Set3"),
            brewer.pal(12, "Set3"),brewer.pal(8, "Set2"),brewer.pal(12, "Set3"),
@@ -138,15 +136,15 @@ alldatatax_norm<-ddply(alldatatax,.(Sample),transform,rescale=sqrt(Percent))
 # remove lowest abundance taxa
 alldatatax_normg<- alldatatax_norm %>% dplyr::group_by(Order) # group
 taxsums<-dplyr::summarise(alldatatax_normg, sums=sum(Percent)) # calculate sums
-taxsums<-taxsums[order(-taxsums$sums),] # reorder 
+taxsums<-taxsums[order(-taxsums$sums),] # reorder
 toptax<-taxsums[1:30,] # extract top 30 Orders
 topdatatax_norm <- alldatatax_norm[alldatatax_norm$Order %in% toptax$Order,]
 
 
 ## FIGURE 4B ##############################################
 # 1030x550
-ggplot(topdatatax_norm, aes(Sample, Order_Name)) + 
-  geom_tile(aes(fill = rescale),colour = "white") + ggpubr::theme_transparent() + 
+ggplot(topdatatax_norm, aes(Sample, Order_Name)) +
+  geom_tile(aes(fill = rescale),colour = "white") + ggpubr::theme_transparent() +
   facet_grid(factor(Phylum, levels=c("Actinobacteria","Bacteroidetes","Cyanobacteria","Firmicutes","Fusobacteria",
                                      "Proteobacteria","Tenericutes","Verrucomicrobia","Unknown"))~
                factor(SampleType, levels = c("water","gut"))+Method+Station,
@@ -154,7 +152,7 @@ ggplot(topdatatax_norm, aes(Sample, Order_Name)) +
   scale_fill_gradientn(na.value = "salmon",labels = scales::percent,limits=c(0,1),
                        colours=c("white","#fecc5c","#fd8d3c","#f03b20","#bd0026","darkred"))+
   scale_x_discrete(expand = c(0, 0)) +
-  scale_y_discrete(expand = c(0, 0)) + 
+  scale_y_discrete(expand = c(0, 0)) +
   theme(legend.position = "bottom",axis.ticks = element_blank(),
         axis.text.y = element_text(size=10, colour="grey40"),
         axis.text.x = element_blank(),
@@ -195,10 +193,10 @@ guttrans<-guttrans[2:68]
 
 # simple venn diagrams
 venn(list(gut16S=gut16S, water16S=water16S))
-siteshey<-venn(list("1.PVD Gut 16S"=gut16S1, 
-          "2.GB Gut 16S"=gut16S2, 
-          "3.BIS Gut 16S"=gut16S3, 
-          "4.NAR Gut 16S"=gut16S4, 
+siteshey<-venn(list("1.PVD Gut 16S"=gut16S1,
+          "2.GB Gut 16S"=gut16S2,
+          "3.BIS Gut 16S"=gut16S3,
+          "4.NAR Gut 16S"=gut16S4,
           "5.NIN Gut 16S"=gut16S5))
 hey<- venn(list("gut 16S"=gut16S, "water 16S"=water16S, "gut metatranscriptome"=guttrans))
 summaryvenn<-attr(hey, "intersections")
@@ -206,7 +204,7 @@ summaryvennsites<-attr(siteshey, "intersections")
 
 
 
-## UPSETR --------------------
+## UPSETR plots --------------------
 
 library(UpSetR)
 library(reshape2)
@@ -233,34 +231,31 @@ UpSet(t(m), set_order = order(c("water16S","gutRNA","gut16S")),
 
 ## FIGURE 4A ##############################################
 #1000x155
-UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")), 
+UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")),
       pt_size = unit(.35, "cm"),lwd=3,
-      left_annotation = rowAnnotation(" " = anno_barplot(set_size(m), bar_width=0.7, 
+      left_annotation = rowAnnotation(" " = anno_barplot(set_size(m), bar_width=0.7,
                             axis_param = list(direction = "reverse", side = "top",labels_rot = 0),
                             border = FALSE, annotation_name_side = "top",
-                            gp = gpar(fill = "black"), 
-                            width = unit(4, "cm"))), 
+                            gp = gpar(fill = "black"),
+                            width = unit(4, "cm"))),
       right_annotation = NULL,row_names_side = "left",
       top_annotation = upset_top_annotation(m,bar_width = 0.9))
 
 
-
-
-
 # --------------------------------------------------------
 
-read_sets = list("1.PVD Gut 16S"=gut16S1, 
-                 "2.GB Gut 16S"=gut16S2, 
-                 "3.BIS Gut 16S"=gut16S3, 
-                 "4.NAR Gut 16S"=gut16S4, 
+read_sets = list("1.PVD Gut 16S"=gut16S1,
+                 "2.GB Gut 16S"=gut16S2,
+                 "3.BIS Gut 16S"=gut16S3,
+                 "4.NAR Gut 16S"=gut16S4,
                  "5.NIN Gut 16S"=gut16S5,
                  "All water 16S"=water16S)
 mgutw = make_comb_mat(read_sets)
 
 
-## FIGURE S2 ##############################################
-
+## FIGURE S3 ##############################################
 #900x400
+
 UpSet(mgutw,comb_col = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey40",
                          "black","black","black","grey40","black","black",
                          "black","grey40","black","black","grey40","black",
@@ -268,41 +263,33 @@ UpSet(mgutw,comb_col = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey
                          "grey40","black","grey40","black","black","grey40",
                          "black","grey40","black","grey40","grey40","black",
                          "black","grey40","black","grey40","black","grey40",
-                         "grey40","black","grey40", "black", "grey40", "grey40", 
+                         "grey40","black","grey40", "black", "grey40", "grey40",
                          "grey40", "grey40", "grey40", "grey40"),
       set_order = order(c("2.GB Gut 16S","3.BIS Gut 16S",
-                          "4.NAR Gut 16S", "5.NIN Gut 16S","All water 16S","1.PVD Gut 16S")), 
+                          "4.NAR Gut 16S", "5.NIN Gut 16S","All water 16S","1.PVD Gut 16S")),
       pt_size = unit(.5, "cm"),lwd=3,
-      right_annotation = rowAnnotation(" " = anno_barplot(set_size(mgutw), bar_width=0.7, 
+      right_annotation = rowAnnotation(" " = anno_barplot(set_size(mgutw), bar_width=0.7,
                                                          axis_param = list(side = "top",labels_rot = 0),
                                                          border = FALSE, annotation_name_side = "top",
-                                                         gp = gpar(fill = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey40")), 
-                                                         width = unit(4, "cm"))), 
+                                                         gp = gpar(fill = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey40")),
+                                                         width = unit(4, "cm"))),
       row_names_side = "left",
       top_annotation = upset_top_annotation(mgutw,bar_width = 0.9, height = unit(6, "cm")))
-
-
-
-
-
-
-
-
 
 
 
 ### NMDS of Metatranscriptome taxonomy -----------------
 ###################################################################################
 
-Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD", 
+Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
           "2.GB","2.GB","2.GB","2.GB","2.GB",
           "3.BIS","3.BIS","3.BIS","3.BIS","3.BIS",
-          "4.NAR","4.NAR","4.NAR","4.NAR","4.NAR", 
+          "4.NAR","4.NAR","4.NAR","4.NAR","4.NAR",
           "5.NIN","5.NIN","5.NIN","5.NIN","5.NIN")
 
 library(vegan)
 theme_set(theme_bw())
-veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
 {
   theta <- (0:npoints) * 2 * pi/npoints
   Circle <- cbind(cos(theta), sin(theta))
@@ -336,16 +323,16 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-## FIGURE S4A ##############################################
-metatranssp<- 
-  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() + 
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) + 
+## FIGURE S5A ##############################################
+metatranssp<-
+  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
-  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") + 
+  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
-  theme(legend.text = element_text(size=14, colour="gray20"), 
+  theme(legend.text = element_text(size=14, colour="gray20"),
         legend.position = "none",
         legend.title = element_blank(),legend.box="horizontal") +
   ggtitle("Species level annotation")
@@ -380,16 +367,16 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-## FIGURE S4B ##############################################
-metatransord<- 
-  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() + 
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) + 
+## FIGURE S5B ##############################################
+metatransord<-
+  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
-  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") + 
+  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
-  theme(legend.text = element_text(size=14, colour="gray20"), 
+  theme(legend.text = element_text(size=14, colour="gray20"),
         legend.position = "right",
         legend.title = element_blank(),legend.box="horizontal")+
   ggtitle("Order level annotation")
@@ -397,19 +384,14 @@ metatransord<-
 adonis2(abund_tableord~Site, data=NMDS, by=NULL,method="bray", k=2)
 
 
+## FIGURE S5 TOTAL ##############################################
 #1000x800
 cowplot::plot_grid(metatranssp, metatransord+theme(legend.position="none"),
                    get_legend(metatransord))
 
 
-
-
-
-
-
-
 ####
-### Metatranscriptome Rarefaction curve - Figure S1 ----------------------------------------------
+### Metatranscriptome Rarefaction curve - Figure S2 ----------------------------------------------
 ####
 
 # Load in the raw annotation data
@@ -448,11 +430,11 @@ legend(700,250, c("1.PVD gut","2.GB gut","3.BIS gut","4.NAR gut","5.NIN gut", "A
 #generate rarefaction curves
 #NOTE: THIS STEP TAKES A WHILE TO RUN.
 # Step size has been increased so it doesn't take a day or so
-outw <- with(pars, rarecurve(datamatt, step = 800, 
+outw <- with(pars, rarecurve(datamatt, step = 800,
                              sample = raremax, col = colors, label = FALSE))
 #determine limits of the graph
 Smax <- sapply(outw, max)
-#plot the rarefaction curves
+#plot the rarefaction curves - Figure S2A
 #550x400
 plot(c(1, 1103294), c(1, max(Smax)), xlab = "Number of Reads",
      ylab = "Observed Number of Annotated Species", type = "n")
@@ -465,14 +447,15 @@ for (i in seq_along(outw)) {
 # check slopes of curves at the end, make sure they're ~0
 end<-raremax-1
 slopes<-rareslope(datamatt, end)
+# Figure S2B
 plot(slopes, type="p", pch=23, bg = colors,
      cex=2, xlab = "Metatranscriptome Samples", ylim=c(0,0.05))
 # coverage proxy:
 coverage<-100-100*rareslope(datamatt, end)
+# Figure S2C
 plot(coverage, type="p", pch=23, bg = colors,
-     cex=2, xlab = "Metatranscriptome Samples", 
+     cex=2, xlab = "Metatranscriptome Samples",
      ylab="Coverage (%)", ylim=c(95,100))
 
 mean(coverage)
 sd(coverage)
-        

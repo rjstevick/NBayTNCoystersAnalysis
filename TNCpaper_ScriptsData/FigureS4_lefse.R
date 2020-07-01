@@ -1,6 +1,6 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # 16S abundances using LefSe
-# Figure S3
+# Figure S4
 # updated 4/16/2020 for resubmission
 
 # 16S Amplicon data at order level analyzed with LefSe
@@ -41,16 +41,18 @@ splot<- datasites %>%
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))
 
 
-# Plot together
+# Plot together - FIGURE S4
 cowplot::plot_grid(tplot,splot, ncol=2, align="hv", axis="tbr")
 #1300x800
+
+
 
 
 # Just top 30 taxa --------------------
 # show only if they are significantly different
 
 # get this variable from script for Figure 4
-toptax 
+toptax
 
 # Extact data for orders included in toptax
 topdatatype <- datatype[datatype$Order %in% toptax$Order,]
@@ -78,5 +80,3 @@ splot<- topdatasites %>%
   labs(y="LDA Score (log 10)",x=NULL)+
   ggtitle("Sites")+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))
-
-

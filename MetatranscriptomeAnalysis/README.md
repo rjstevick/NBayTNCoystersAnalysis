@@ -5,7 +5,7 @@ This folder contains scripts used to perform modified SAMSA2 analysis on the met
 - Main modified SAMSA2 script (masterscript*.sh)
 - Scripts to run Rscripts on the command line (deSEQ*.sh)
 - Script to compute DIAMOND annotations against refSeq dbs (newannot.sh)
-- Raw sequence counts and file inputs
+- Raw sequence counts and file inputs (rawcounts.txt and samples_transcriptomes.txt)
 
 #### 2. R_scripts
 - DeSeq2 files to run states for the susbsytems based on deSEQ_groups.sh or deSEQ_subsys.sh

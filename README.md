@@ -19,7 +19,7 @@ This folder contains scripts used to perform modified SAMSA2 analysis on the met
 - Main modified SAMSA2 script (masterscript*.sh)
 - Scripts to run Rscripts on the command line (deSEQ*.sh)
 - Script to compute DIAMOND annotations against refSeq dbs (newannot.sh)
-- Raw sequence counts and file inputs
+- Raw sequence counts and file inputs (rawcounts.txt and samples_transcriptomes.txt)
 #### 2. R_scripts
 - DeSeq2 files to run states for the susbsytems based on deSEQ_groups.sh or deSEQ_subsys.sh
 
@@ -53,8 +53,8 @@ This folder contains all the processed data files from the analysis described in
 - Metatranscriptomic annotation taxonomy results with RefSeq
 #### Scripts
 - **Figure1_2.R** - makes the map of sites and PCA of environmental data.
-- **Figure3_S1.R** - 16S rRNA alpha- and beta-diversity and rarefaction plots.
-- **Figure4_S1_S2_S4.R** - compares taxonomy generated from RefSeq/metatranscriptomes and 16S rRNA data with heatmaps and UpSetR plots (4 and S2). Metatranscriptome taxonomy rarefaction and beta-diversity plots (S1 and S4).
+- **Figure3_S1_S2.R** - 16S rRNA percent abundance barplots (including controls), rarefaction plots, and alpha- and beta-diversity.
+- **Figure4_S2_S3_S5.R** - compares taxonomy generated from RefSeq/metatranscriptomes and 16S rRNA data with heatmaps and UpSetR plots (4 and S3). Metatranscriptome taxonomy rarefaction and beta-diversity plots (S2 and S5).
 - **Figure5_6.R** - Metaranscriptomic functional data at pathway levels, subset for stress response (N vs S), nitrogen and phosphorus metabolism (each site vs mean) with barplots.
-- **FigureS3_lefse.R** - 16S rRNA amplicon data at order level output from LefSe (Taxonomy/TNC_summaryLefSeResults.xlsx)
-- **FigureS5-S8.R** - Metaranscriptomic functional data at gene level for stress response, nitrogen metabolism, phosphorus metabolism (heatmaps)
+- **FigureS4_lefse.R** - 16S rRNA amplicon data at order level output from LefSe (Taxonomy/TNC_summaryLefSeResults.xlsx)
+- **FigureS6-S9.R** - Metaranscriptomic functional data at gene level for stress response, nitrogen metabolism, phosphorus metabolism (heatmaps)

@@ -1,10 +1,9 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
-# 16S diversity and rarefaction plots
-# Figures 3 and S1
-# updated 4/16/2020 for resubmission
+# 16S controls, rarefaction, and diversity plots
+# Figures 3, S1, and S2
+# RJS updated 6/30/2020 for resubmission
 
 # 16S Amplicon data at ASV level
-
 
 library(tidyr)
 library(dplyr)
@@ -18,7 +17,7 @@ library(ggbiplot)
 library(vegan)
 library(ggpubr)
 library(stringr)
-
+library(scales)
 
 #import data - ASV counts, **not normalized**
 data<-read_xlsx("Taxonomy/16SallData_SILVAtaxa.xlsx", sheet="ASVcounts")
@@ -28,7 +27,7 @@ metadata<-read_xlsx("Taxonomy/16SallData_SILVAtaxa.xlsx", sheet="Metadata")
 #add in all taxa hierarchy to ASV counts
 datafull<-full_join(data, taxakey)
 #convert to long form
-datafulllong<-gather(datafull, SampleID, count, "TNC01":"TNC64") 
+datafulllong<-gather(datafull, SampleID, count, "TNC01":"TNC64")
 
 
 ####
@@ -45,10 +44,9 @@ SampleReadCounts<-
 # add read counts in to main table
 metadata$SampleTotalReads<-SampleReadCounts$SampleTotalReads
 datafulllong<-
-  full_join(datafulllong, SampleReadCounts, by="SampleID")
-# calculate percent abundances
-datafulllong$percent<-
-  datafulllong$count/datafulllong$SampleTotalReads
+  full_join(datafulllong, SampleReadCounts, by="SampleID") %>%
+  # calculate percent abundances
+  mutate(percent=count/SampleTotalReads)
 #add in the metadata
 datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
                             copy=FALSE, suffix=c(".x",".y"))
@@ -56,19 +54,19 @@ datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
 #select only gut, water
 metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
 
-# Number of reads per sample
+# Number of QCd sequencing reads per sample
 ggplot(metadatags,aes(SampleName,SampleTotalReads,fill=Station))+geom_bar(stat="identity")+
   facet_grid(.~SampleType+Station, scales="free",space="free")+
   theme(legend.position = "none", axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.length = unit(0.6, 'lines'))+
   labs(y="Number of reads \nper sample",x=NULL)+
-  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"), 
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"),
                     labels=c("1. Providence River", "2. Greenwich Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))
 
 
 
 ####
-### 16S Rarefaction curve and coverage - Figure S1 ----------------------------------------------
+### 16S Rarefaction curve and coverage - Figure S2 ----------------------------------------------
 ####
 
 datamat<-data[1:61] # remove controls
@@ -78,7 +76,6 @@ raremax <- min(rowSums(datamatt))
 S <- specnumber(datamatt) # observed number of ASVs
 Srare <- rarefy(datamatt, raremax)
 
-
 #define colors based on gut/site or water
 colors<-c("#253494","#253494","#253494","#253494","#253494","#253494","#253494","#253494","#253494","#253494",
           "#0868ac","#0868ac","#0868ac","#0868ac","#0868ac","#0868ac","#0868ac","#0868ac","#0868ac","#0868ac",
@@ -86,9 +83,8 @@ colors<-c("#253494","#253494","#253494","#253494","#253494","#253494","#253494",
           "#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4","#7bccc4",
           "#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc","#bae4bc",
           "darkred","darkred","darkred","darkred","darkred","darkred","darkred","darkred","darkred","darkred")
-#put plotting parameters into pars
+#put plotting colors into pars
 pars <- expand.grid(col = colors, stringsAsFactors = FALSE)
-
 
 #plot number of ASVs vs. rarefied
 #550x400
@@ -102,11 +98,11 @@ legend(700,250, c("1.PVD gut","2.GB gut","3.BIS gut","4.NAR gut","5.NIN gut", "A
 
 #generate rarefaction curves
 #NOTE: THIS STEP TAKES A LITTLE WHILE TO RUN.
-outw <- with(pars, rarecurve(datamatt, step = 20, 
+outw <- with(pars, rarecurve(datamatt, step = 20,
                              sample = raremax, col = colors, label = FALSE))
 #determine limits of the graph
 Smax <- sapply(outw, max)
-#plot the rarefaction curves
+#plot the rarefaction curves - Figure S2A
 #550x400
 plot(c(1, 80000), c(1, max(Smax)), xlab = "Number of Reads",
      ylab = "Observed Number of ASVs", type = "n")
@@ -119,12 +115,14 @@ for (i in seq_along(outw)) {
 # check slopes of curves at the end, make sure they're ~0
 end<-raremax-1
 slopes<-rareslope(datamatt, end)
+# Figure S2B
 plot(slopes, type="p", pch=21, bg = colors,
      cex=2, xlab = "16S Amplicon Samples", ylim=c(0,0.05))
 # coverage proxy:
 coverage<-100-100*rareslope(datamatt, end)
+# Figure S2C
 plot(coverage, type="p", pch=21, bg = colors,
-     cex=2, xlab = "16S Amplicon Samples", 
+     cex=2, xlab = "16S Amplicon Samples",
      ylab="Coverage (%)", ylim=c(95,100))
 
 mean(coverage)
@@ -140,7 +138,7 @@ sd(coverage)
 
 # remove chloroplast reads
 datafulllong <- datafulllong %>%
-  filter(str_detect(Taxon, "Chloroplast", negate=TRUE)) 
+  filter(str_detect(Taxon, "Chloroplast", negate=TRUE))
 
 # calculate new number of reads per sample
 SampleReadCounts<-
@@ -150,15 +148,78 @@ SampleReadCounts<-
 # add read counts in to main table
 metadata$SampleTotalReads<-SampleReadCounts$SampleTotalReads
 datafulllong<-
-  full_join(datafulllong, SampleReadCounts, by="SampleID")
-# calculate percent abundances
-datafulllong$percent<-
-  datafulllong$count/datafulllong$SampleTotalReads
+  full_join(datafulllong, SampleReadCounts, by="SampleID") %>%
+  # calculate percent abundances
+  mutate(percent=count/SampleTotalReads)
+
 #add in the metadata
 datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
                             copy=FALSE, suffix=c(".x",".y"))
 #select only gut, water
 dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
+
+
+####
+### Bar plots with Negative & Positive Controls - Figure S1 -----------------------------------------------------
+####
+
+# sum ASV percentages by phylum
+phylumperc<- datafulllongmeta %>%
+  group_by(Phylum,SampleID, SampleName, SampleType, Station, TypeStationGroup) %>%
+  dplyr::summarise(physum=sum(percent))
+
+# show only the top 10 phyla, put the rest in "Other"
+phylumperc$PhylumOther<-forcats::fct_lump(f=phylumperc$Phylum, w=phylumperc$physum, other_level="Others", n=10)
+
+# define palette
+palette<-c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C",
+           "#FDBF6F", "#FF7F00", "#CAB2D6","gray48","gray30")
+
+barp<-ggplot(phylumperc,
+       (aes(x=SampleName, y=physum,
+            fill=factor(PhylumOther, levels=c("Actinobacteria",  "Bacteroidetes","Cyanobacteria","Firmicutes","Fusobacteria","Planctomycetes","Proteobacteria", "Tenericutes","Verrucomicrobia","Unknown","Others")))))+
+  facet_grid(.~TypeStationGroup, scales="free", space="free")+
+  geom_col(position="fill", alpha=0.8)+theme_minimal()+
+  theme(legend.text = element_text(size=12, colour="gray20"),
+        legend.position = "right",
+        axis.text.x = element_text(angle=60, hjust=1, vjust=1),
+        axis.ticks = element_line(inherit.blank=FALSE, color="grey30"))+
+  facet_grid(.~SampleType+Station, scales="free",space="free")+
+  scale_fill_manual(values=c(palette))+
+  labs(y="Percent abundance",x=NULL,fill="Phylum")+
+  scale_y_continuous(labels = scales::percent, expand=c(0,0))
+
+
+# control samples ASV percentages
+controlASVperc<- datafulllongmeta %>%
+  filter(SampleType=="control") %>%
+  group_by(ASVID, Taxon,SampleID, SampleName, SampleType, Station, TypeStationGroup) %>%
+  dplyr::summarise(Taxonsum=sum(percent)) %>%
+  mutate(TaxonOther=forcats::fct_lump(f=Taxon, w=Taxonsum, other_level="Others", n=20))
+
+palette2<-c("#7c342b","#7a3261","#d24359","#d48c3b","#538636","#47bd8c","#c64ecc","#48477d",
+            "#84ac84","#c58bb9","#633dbb","#375731","#d74d2a","#b4aa44","#d44a91","#56a1be",
+            "#7a81d7","#7e622e","#d28978","#6dc041",'gray30')
+
+# plot controls at ASV level
+ctrlp<-ggplot(dplyr::arrange(controlASVperc,TaxonOther), (aes(x=SampleName, y=Taxonsum, fill=TaxonOther)))+
+  geom_col(position="fill", alpha=0.8)+theme_minimal()+
+  coord_flip()+
+  theme(legend.text = element_text(size=9, colour="gray20"),
+        legend.position = "bottom",
+        axis.ticks = element_line(inherit.blank=FALSE, color="grey30"))+
+  scale_fill_manual(values=c(palette2))+
+  labs(y="Percent abundance",x=NULL,fill=NULL)+
+  scale_y_continuous(labels = scales::label_percent(accuracy=1), breaks=breaks_pretty(n=10), expand=c(0,0))+
+  guides(fill = guide_legend(ncol = 2))
+
+
+# Figure S1
+cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,40), labels=c("A","B"))
+ggsave("FigureS1.png", width = 15, height = 10, dpi=400)
+ggsave("FigureS1.pdf", width = 15, height = 10)
+ggsave("FigureS1.svg", width = 15, height = 10)
+
 
 
 
@@ -170,7 +231,7 @@ dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
 #convert normalized data (with chloros removed) back to wide
 dataASVwide<-select(dataASVmetagw, SampleID, ASVID, percent)
 dataASVtable<-spread(dataASVwide, ASVID, percent) %>%
-  tibble::column_to_rownames("SampleID") 
+  tibble::column_to_rownames("SampleID")
 
 # calculate diversity
 diversitytotal<-diversity(dataASVtable, index="simpson")
@@ -187,11 +248,10 @@ dataag_water<-filter(metadatags, SampleType=="water")
 divplot<-ggplot(metadatags,aes(x=Station,y=Simpsons, fill=Station))+
   geom_boxplot()+
   geom_point(size=4, shape=23)+
-  facet_grid(~SampleType, labeller=as_labeller(c(gut="Gut samples (n=10)", water="Water samples (n=2)"))) + 
+  facet_grid(~SampleType, labeller=as_labeller(c(gut="Gut samples (n=10)", water="Water samples (n=2)"))) +
   labs(x=NULL,y="Simpson's Index of Diversity",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) + 
-  #                    labels=c("1. Providence River", "2. Greenwich Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme_bw()+scale_y_continuous(limits=c(0,1.0))+
   theme(legend.position = "none",
         strip.background = element_rect("grey90"))
@@ -201,9 +261,9 @@ divlegend<-ggplot(metadatags,aes(x=Station,y=Simpsons, fill=Station))+
   geom_point() + facet_grid(~SampleType) + theme_bw()+
   labs(x=NULL,y="Simpson's Index of Diversity",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) + 
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme(legend.position = c(.86,.33),
-        legend.text = element_text(size=14, colour="gray20"), 
+        legend.text = element_text(size=14, colour="gray20"),
         strip.background = element_rect("grey90"),
         legend.background = element_rect(color="grey40"))
 
@@ -243,14 +303,12 @@ compare_means(data=metadatags, Simpsons~Station, group.by="SampleType",
 
 # ellipse function
 theme_set(theme_bw())
-veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100) 
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
 {
   theta <- (0:npoints) * 2 * pi/npoints
   Circle <- cbind(cos(theta), sin(theta))
   t(center + scale * t(Circle %*% chol(cov)))
 }
-
-
 
 # Get spread of gut points based on Station
 abund_table<-dataASVtable[c(1:50),]
@@ -274,11 +332,11 @@ for(g in levels(NMDS$Station)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Station),mean)
 #Now do the actual plotting
-gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() + 
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Station), size=1) + 
+gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Station), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Station))+scale_shape_manual(values = c(21,22,23,24,25))+
-  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") + 
-  #  annotate("text",x=NMDS$x+0.2,y=NMDS$y+0.05,label=paste(NMDS$Station,NMDS$OysterNum),size=4, color="gray40") + # to determine which point is which 
+  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
+  #  annotate("text",x=NMDS$x+0.2,y=NMDS$y+0.05,label=paste(NMDS$Station,NMDS$OysterNum),size=4, color="gray40") + # to determine which point is which
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
@@ -286,7 +344,6 @@ gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() +
         legend.title = element_blank(),legend.box="horizontal")
 
 adonis2(abund_table~Station, data=NMDS, by=NULL,method="bray", k=2)
-
 
 
 # Get spread of points based on Type
@@ -313,10 +370,10 @@ head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Type),mean)
 head(NMDS.mean)
 #Now do the actual plotting
-typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() + 
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Type), size=1) + 
+typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Type), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Station))+
-  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=6, color="gray10") + 
+  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=6, color="gray10") +
   scale_fill_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_colour_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_linetype_manual(values=c("solid","twodash"), labels=c("Gut","Water"))+
@@ -341,7 +398,7 @@ nmds<-cowplot::plot_grid(gutNMDS+theme(legend.position = "none"),
                          typeNMDS+theme(legend.position = "none"),
                          align="hv", axis="t",nrow=1)
 
-plots<-cowplot::plot_grid(divplot+theme(legend.position = "none"),nmds, nrow=2, 
+plots<-cowplot::plot_grid(divplot+theme(legend.position = "none"),nmds, nrow=2,
                           align="v", axis="l",rel_heights = c(40,60))
 legends<-cowplot::plot_grid(divleg,typeleg,gutleg, ncol = 1,rel_heights = c(50,20,50))
 

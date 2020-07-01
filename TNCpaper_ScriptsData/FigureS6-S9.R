@@ -1,10 +1,9 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Script to analyze gene-level functional expression from SAMSA
-# Figures S5, S6, S7, S8
+# Figures S6, S7, S8, S9
 # updated 4/16/2020 for resubmission
 
 # Metaranscriptomic functional data at gene level
-
 
 library("ggplot2")
 library("tidyr")
@@ -12,9 +11,9 @@ library("dplyr")
 library("readxl")
 library("gridExtra")
 library("leaflet")
-library(RColorBrewer)
-library(viridis)
-library(pheatmap)
+library("RColorBrewer")
+library("viridis")
+library("pheatmap")
 
 data<-read_excel("Function/DESeq_subsys_results_level4_summary.xlsx", sheet=1)
 hierarchy<-read_excel("Function/DESeq_subsys_results_level4_summary.xlsx", sheet=2)
@@ -24,7 +23,6 @@ data$padj_GB<-as.numeric(data$padj_GB)
 data$padj_BIS<-as.numeric(data$padj_BIS)
 data$padj_NAR<-as.numeric(data$padj_NAR)
 data$padj_NIN<-as.numeric(data$padj_NIN)
-
 
 datah<-merge(data, hierarchy)
 
@@ -39,11 +37,11 @@ datahdenitgp<-gather(datahdenit, padj, padjvalue, "padj_PVD","padj_GB","padj_BIS
 datahdenitg$padj<-datahdenitgp$padj
 datahdenitg$padjvalue<-datahdenitgp$padjvalue
 
-datahdenitg$signif<-ifelse(datahdenitgp$padjvalue <=0.01, "**", 
+datahdenitg$signif<-ifelse(datahdenitgp$padjvalue <=0.01, "**",
                         ifelse(datahdenitgp$padjvalue <=0.05, "*",
                                ifelse("ns")))
 
-datahdenitg$foldchange = factor(datahdenitg$foldchange, 
+datahdenitg$foldchange = factor(datahdenitg$foldchange,
                              levels = c("log2FoldChange_PVD",
                     "log2FoldChange_GB","log2FoldChange_BIS",
                     "log2FoldChange_NAR","log2FoldChange_NIN"))
@@ -55,7 +53,7 @@ ggplot(datahdenitg, aes(Level4, foldvalue,fill=foldchange))+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
    geom_text(aes(label=signif), position = position_dodge(width = 1), size=6)
 
-datahdenitg$Level3f<-factor(datahdenitg$Level3, 
+datahdenitg$Level3f<-factor(datahdenitg$Level3,
                            levels=c("Nitric_oxide_synthase","Allantoin_Utilization",
                                     "Amidase_clustered_with_urea_and_nitrile_hydratase_functions",
                                     "Denitrification",
@@ -66,7 +64,7 @@ datahdenitg$Level3f<-factor(datahdenitg$Level3,
 
 
 
-ggplot(datahdenitg, aes(Level4, foldchange, label=signif, 
+ggplot(datahdenitg, aes(Level4, foldchange, label=signif,
                          fill=foldvalue,color=signif))+theme_minimal()+
   geom_tile(size=0.7)+facet_grid(Level3f~., scales="free", space="free")+
   scale_fill_viridis()+coord_flip()+
@@ -80,7 +78,6 @@ ggplot(datahdenitg, aes(Level4, foldchange, label=signif,
 
 ### PHOSPHOROUS -----------------------
 
-
 datahphos<-filter(datah, Level2=="Phosphorus Metabolism")
 datahphosg<-gather(datahphos, foldchange, foldvalue, "log2FoldChange_PVD",
                     "log2FoldChange_GB","log2FoldChange_BIS",
@@ -90,11 +87,11 @@ datahphosgp<-gather(datahphos, padj, padjvalue, "padj_PVD","padj_GB","padj_BIS",
 datahphosg$padj<-datahphosgp$padj
 datahphosg$padjvalue<-datahphosgp$padjvalue
 
-datahphosg$signif<-ifelse(datahphosgp$padjvalue <=0.01, "**", 
+datahphosg$signif<-ifelse(datahphosgp$padjvalue <=0.01, "**",
                            ifelse(datahphosgp$padjvalue <=0.05, "*",
                                   ifelse("ns")))
 
-datahphosg$foldchange = factor(datahphosg$foldchange, 
+datahphosg$foldchange = factor(datahphosg$foldchange,
                                 levels = c("log2FoldChange_PVD",
                                            "log2FoldChange_GB","log2FoldChange_BIS",
                                            "log2FoldChange_NAR","log2FoldChange_NIN"))
@@ -102,7 +99,6 @@ datahphosg$foldchange = factor(datahphosg$foldchange,
 ggplot(datahphosg, aes(Level4, foldvalue,fill=foldchange))+
   geom_col(position = "dodge")+coord_flip()+
   facet_grid(Level3~., scales="free",space="free")+
-#  theme(strip.text.y = element_text(angle=0))+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   geom_text(aes(label=signif), position = position_dodge(width = 1), size=6)
 
@@ -123,8 +119,7 @@ ggplot(datahphosg,aes(Level4, foldchange, label=signif,
 
 ### STRESS RESPONSE -----------------------
 
-
-datahstress<-filter(datah,Level2=="Osmotic stress" | Level2=="Periplasmic Stress" | 
+datahstress<-filter(datah,Level2=="Osmotic stress" | Level2=="Periplasmic Stress" |
                     Level2=="Oxidative stress")
 datahstressg<-gather(datahstress, foldchange, foldvalue, "log2FoldChange_PVD",
                    "log2FoldChange_GB","log2FoldChange_BIS",
@@ -134,32 +129,27 @@ datahstressgp<-gather(datahstress, padj, padjvalue, "padj_PVD","padj_GB","padj_B
 datahstressg$padj<-datahstressgp$padj
 datahstressg$padjvalue<-datahstressgp$padjvalue
 
-datahstressg$signif<-ifelse(datahstressgp$padjvalue <=0.01, "**", 
+datahstressg$signif<-ifelse(datahstressgp$padjvalue <=0.01, "**",
                           ifelse(datahstressgp$padjvalue <=0.05, "*",
                                  ifelse("ns")))
 
-datahstressg$foldchange = factor(datahstressg$foldchange, 
+datahstressg$foldchange = factor(datahstressg$foldchange,
                                levels = c("log2FoldChange_PVD",
                                           "log2FoldChange_GB","log2FoldChange_BIS",
                                           "log2FoldChange_NAR","log2FoldChange_NIN"))
-
 
 data3gpfpe<-gather(datahstress, folderror, errorvalue, "lfcSE_PVD","lfcSE_GB",
                    "lfcSE_BIS","lfcSE_NAR","lfcSE_NIN")
 datahstressg$folderror<-data3gpfpe$folderror
 datahstressg$errorvalue<-data3gpfpe$errorvalue
 
-
 ggplot(datahstressg, aes(Level4, foldvalue,fill=foldchange))+
   geom_col(position = "dodge")+coord_flip()+
   facet_grid(Level2~., scales="free", space="free")+
-  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue), 
+  geom_errorbar(aes(ymin=foldvalue-errorvalue, ymax=foldvalue+errorvalue),
                 size=0.8,position = position_dodge(width=0.9), width = 0, color="grey60")+
- #   theme(strip.text.y = element_text(angle=0))+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   geom_text(aes(label=signif), position = position_dodge(width = 1), size=6)
-
-
 
 ggplot(datahstressg, aes(Level4, foldchange, label=signif,
                          fill=foldvalue,color=signif))+theme_minimal()+
@@ -170,11 +160,3 @@ ggplot(datahstressg, aes(Level4, foldchange, label=signif,
   theme(legend.position="bottom",
         plot.background = element_rect(fill = "transparent", color = NA),rect = element_rect(fill = "transparent"))+
   scale_color_manual(values=c("darkred","red","black"))
-
-
-
-
-
-#write.csv(datahdenit,"nitrogen.csv")
-#write.csv(datahphos,"phosphorus.csv")
-#write.csv(datahstress,"stress.csv")
