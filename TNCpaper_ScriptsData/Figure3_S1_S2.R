@@ -55,7 +55,8 @@ datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
 metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
 
 # Number of QCd sequencing reads per sample
-ggplot(metadatags,aes(SampleName,SampleTotalReads,fill=Station))+geom_bar(stat="identity")+
+ggplot(metadata,aes(SampleName,SampleTotalReads,fill=Station))+
+  geom_bar(stat="identity")+
   facet_grid(.~SampleType+Station, scales="free",space="free")+
   theme(legend.position = "none", axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.length = unit(0.6, 'lines'))+
@@ -104,6 +105,7 @@ outw <- with(pars, rarecurve(datamatt, step = 20,
 Smax <- sapply(outw, max)
 #plot the rarefaction curves - Figure S2A
 #550x400
+par(mfrow=c(3,1))
 plot(c(1, 80000), c(1, max(Smax)), xlab = "Number of Reads",
      ylab = "Observed Number of ASVs", type = "n")
 abline(v = raremax, lty="dashed")
@@ -117,13 +119,14 @@ end<-raremax-1
 slopes<-rareslope(datamatt, end)
 # Figure S2B
 plot(slopes, type="p", pch=21, bg = colors,
-     cex=2, xlab = "16S Amplicon Samples", ylim=c(0,0.05))
+     cex=2, xlab = "16S Amplicon Samples", 
+     ylab="Slopes at Raremax", ylim=c(0,0.05))
 # coverage proxy:
 coverage<-100-100*rareslope(datamatt, end)
 # Figure S2C
 plot(coverage, type="p", pch=21, bg = colors,
      cex=2, xlab = "16S Amplicon Samples",
-     ylab="Coverage (%)", ylim=c(95,100))
+     ylab="Estimated Coverage (%)", ylim=c(95,100))
 
 mean(coverage)
 sd(coverage)
@@ -166,7 +169,8 @@ dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
 # sum ASV percentages by phylum
 phylumperc<- datafulllongmeta %>%
   group_by(Phylum,SampleID, SampleName, SampleType, Station, TypeStationGroup) %>%
-  dplyr::summarise(physum=sum(percent))
+  dplyr::summarise(physum=sum(percent)) %>%
+  filter(SampleName != "NEG.CON" & SampleName != "NEG.CON.2")
 
 # show only the top 10 phyla, put the rest in "Other"
 phylumperc$PhylumOther<-forcats::fct_lump(f=phylumperc$Phylum, w=phylumperc$physum, other_level="Others", n=10)
@@ -190,20 +194,28 @@ barp<-ggplot(phylumperc,
   scale_y_continuous(labels = scales::percent, expand=c(0,0))
 
 
-# control samples ASV percentages
+# mock control samples ASV percentages
 controlASVperc<- datafulllongmeta %>%
   filter(SampleType=="control") %>%
-  group_by(ASVID, Taxon,SampleID, SampleName, SampleType, Station, TypeStationGroup) %>%
+  filter(SampleName != "NEG.CON" & SampleName != "NEG.CON.2") %>%
+  group_by(ASVID, Taxon, SampleName) %>%
   dplyr::summarise(Taxonsum=sum(percent)) %>%
-  mutate(TaxonOther=forcats::fct_lump(f=Taxon, w=Taxonsum, other_level="Others", n=20))
+  mutate(TaxonOther=forcats::fct_lump(f=Taxon, w=Taxonsum, other_level="Others", n=10))
 
-palette2<-c("#7c342b","#7a3261","#d24359","#d48c3b","#538636","#47bd8c","#c64ecc","#48477d",
-            "#84ac84","#c58bb9","#633dbb","#375731","#d74d2a","#b4aa44","#d44a91","#56a1be",
-            "#7a81d7","#7e622e","#d28978","#6dc041",'gray30')
+palette2<-c("#8c48d6",
+            "#5e9850",
+            "#9bae34",
+            "#c04fae",
+            "#767ba7",
+            "#b74f6f",
+            "#cc5d32",
+            "#906e49",
+            "#509f8d",
+            "#6259b2",'gray30')
 
 # plot controls at ASV level
 ctrlp<-ggplot(dplyr::arrange(controlASVperc,TaxonOther), (aes(x=SampleName, y=Taxonsum, fill=TaxonOther)))+
-  geom_col(position="fill", alpha=0.8)+theme_minimal()+
+  geom_col(position="fill", color="white")+theme_minimal()+
   coord_flip()+
   theme(legend.text = element_text(size=9, colour="gray20"),
         legend.position = "bottom",
@@ -215,7 +227,7 @@ ctrlp<-ggplot(dplyr::arrange(controlASVperc,TaxonOther), (aes(x=SampleName, y=Ta
 
 
 # Figure S1
-cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,40), labels=c("A","B"))
+cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,25), labels=c("A","B"))
 ggsave("FigureS1.png", width = 15, height = 10, dpi=400)
 ggsave("FigureS1.pdf", width = 15, height = 10)
 ggsave("FigureS1.svg", width = 15, height = 10)

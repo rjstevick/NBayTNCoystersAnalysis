@@ -436,6 +436,7 @@ outw <- with(pars, rarecurve(datamatt, step = 800,
 Smax <- sapply(outw, max)
 #plot the rarefaction curves - Figure S2A
 #550x400
+par(mfrow=c(3,1))
 plot(c(1, 1103294), c(1, max(Smax)), xlab = "Number of Reads",
      ylab = "Observed Number of Annotated Species", type = "n")
 abline(v = raremax, lty="dashed")
@@ -449,13 +450,14 @@ end<-raremax-1
 slopes<-rareslope(datamatt, end)
 # Figure S2B
 plot(slopes, type="p", pch=23, bg = colors,
-     cex=2, xlab = "Metatranscriptome Samples", ylim=c(0,0.05))
+     cex=2, xlab = "Metatranscriptome Samples", 
+     ylab= "Slopes at Raremax", ylim=c(0,0.05))
 # coverage proxy:
 coverage<-100-100*rareslope(datamatt, end)
 # Figure S2C
 plot(coverage, type="p", pch=23, bg = colors,
      cex=2, xlab = "Metatranscriptome Samples",
-     ylab="Coverage (%)", ylim=c(95,100))
+     ylab="Estimated Coverage (%)", ylim=c(95,100))
 
 mean(coverage)
 sd(coverage)
