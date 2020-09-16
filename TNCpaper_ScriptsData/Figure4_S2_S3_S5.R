@@ -461,3 +461,45 @@ plot(coverage, type="p", pch=23, bg = colors,
 
 mean(coverage)
 sd(coverage)
+
+
+
+
+####
+### Core Microbiome - Figure XXX ----------------------------------------------
+####
+
+coretaxaord<-dataord %>%
+  # remove when the species is absent
+  filter(sumOrder!=0) %>%
+  # group by ASV and the count the number of samples it occurs in
+  group_by(Order) %>% count() %>% 
+  # keep ASVs that occur in at least 80% of samples
+  arrange(desc(n)) %>% filter(n>=20) %>% 
+  # add back in the other metadata
+  left_join(dataord) %>% 
+  # make a binary scale for when the ASV is present in each sample
+  mutate(percentbin=cut(sumOrder, breaks=c(0,0.0000000001,1)))
+
+coretaxa<-data %>%
+  # remove when the species is absent
+  filter(Percent!=0) %>%
+  # group by Taxon and the count the number of samples it occurs in
+  group_by(Taxa) %>% count() %>% 
+  # keep Taxa that occur in at least 80% of samples
+  arrange(desc(n)) %>% filter(n>=20) %>% 
+  # add back in the other metadata
+  left_join(data) %>% 
+  left_join(taxakey) %>% 
+  # make a binary scale for when the Taxon is present in each sample
+  mutate(percentbin=cut(Percent, breaks=c(0,0.0000000001,1))) %>% 
+  mutate(taxonlabel=paste(Phylum,Taxa,sep="; "))
+
+ggplot(coretaxa, 
+       aes(x=Sample, y=reorder(taxonlabel,n), fill=percentbin))+
+  geom_tile(color="white")+
+  facet_grid(.~Station,scales="free", space="free")+
+  scale_fill_manual(values="aquamarine4", na.value="grey80")+
+  theme_minimal()+
+  theme(legend.position = "none", axis.text.x=element_blank())+
+  labs(x=NULL, y=NULL)

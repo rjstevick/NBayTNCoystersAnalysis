@@ -5,17 +5,14 @@
 
 # 16S Amplicon data at ASV level
 
-library(tidyr)
-library(dplyr)
-library(ggplot2)
+library(ggbiplot)
+library(tidyverse)
 library(RColorBrewer)
 library(phyloseq)
 library(vegan)
 library(readxl)
 library(ggpubr)
-library(ggbiplot)
 library(vegan)
-library(ggpubr)
 library(stringr)
 library(scales)
 
@@ -138,6 +135,8 @@ sd(coverage)
 ####
 ### Remove chloroplast reads and recalculate percent abundances ------------
 ####
+
+datafulllong<-gather(datafull, SampleID, count, "TNC01":"TNC64")
 
 # remove chloroplast reads
 datafulllong <- datafulllong %>%
@@ -418,3 +417,40 @@ legends<-cowplot::plot_grid(divleg,typeleg,gutleg, ncol = 1,rel_heights = c(50,2
 cowplot::plot_grid(plots,legends, ncol=2, rel_widths = c(80,20), align="hv", axis="tbr")
 # 900x550
 # label y as "Bray-Curtis beta diversity (k=2)" in Inkscape
+
+
+
+
+
+####
+### Core Microbiome - Figure XXX ----------------------------------------------
+####
+
+coretaxa<-dataASVwide %>%
+  left_join(metadatags) %>% 
+  # select only the gut samples, not water
+  filter(SampleType=="gut") %>% 
+  # remove when the ASV is absent
+  filter(percent!=0) %>%
+  # group by ASV and the count the number of samples it occurs in
+  group_by(ASVID) %>% count() %>% 
+  # keep ASVs that occur in at least 80% of samples
+  arrange(desc(n)) %>% filter(n>=40) %>% 
+  # add back in the other metadata
+  left_join(taxakey) %>% 
+  left_join(dataASVwide) %>% 
+  left_join(metadatags) %>% 
+  filter(SampleType=="gut") %>% 
+  # make a binary scale for when the ASV is present in each sample
+  mutate(percentbin=cut(percent, breaks=c(0,0.0000000001,1))) %>% 
+  mutate(taxonlabel=paste(Phylum,Class,Order,Family,Genus,Species,sep="; "))
+
+ggplot(coretaxa, 
+       aes(x=SampleID, y=reorder(taxonlabel,n), fill=percentbin))+
+  geom_tile(color="white")+
+  facet_grid(.~Station,scales="free", space="free")+
+  scale_fill_manual(values="aquamarine4", na.value="grey80")+
+  scale_y_discrete(labels=wrap_format(50))+
+  theme_minimal()+
+  theme(legend.position = "none", axis.text.x=element_blank())+
+  labs(x=NULL, y=NULL)
