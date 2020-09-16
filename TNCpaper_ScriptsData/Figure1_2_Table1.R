@@ -1,18 +1,17 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Map and environmental data
-# Figures 1 and 2 
-# updated 1/16/2020
+# Figures 1 & 2 and Table 1
+# updated 20200903
 
 
 # Figure 1 Map --------------------------------------
 
 # load mapping packages
-library("ggplot2")
-library("sf")
-library("readxl")
+library(tidyverse)
+library(sf)
 
 # import metadata averaged per site and lat/longs for mapping
-data <- read_xlsx("Metadata/EnvironmentalPCAmetadata.xlsx", sheet="SiteSummary")
+data <- readxl::read_xlsx("Metadata/EnvironmentalPCAmetadata.xlsx", sheet="SiteSummary")
 # load RI coastline
 outline <- st_read("Metadata/NSDE66796/CUSPLine.shp")
 
@@ -26,12 +25,9 @@ ggplot() + theme_bw()+
   labs(x=NULL, y=NULL)+theme(axis.text = element_text(size=10),legend.position = "none")
 
 
-
-
 # Figure 2 PCA -----------------------------------------
 
 # load packages
-library(tidyverse)
 library(gridExtra)
 library(ggfortify)
 
@@ -74,4 +70,10 @@ aplot +
   scale_y_continuous(limits=c(-.65, .65)) + scale_x_continuous(limits=c(-.7, .7))
 
 
+# Table 1 correlations -----------------------------------------
 
+data %>%
+  pivot_longer("Salinity_ppt":"DO_mgL", names_to="parameter") %>% 
+  group_by(parameter) %>% 
+  summarise(cor(Lat, value), method=c("pearson", "spearman"))
+# note: pearson and spearman give the same results
