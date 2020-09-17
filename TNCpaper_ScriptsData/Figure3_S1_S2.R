@@ -1,7 +1,7 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # 16S controls, rarefaction, and diversity plots
 # Figures 3, S1, and S2
-# RJS updated 6/30/2020 for reresubmission
+# RJS updated 0/17/2020 for reresubmission
 
 # 16S Amplicon data at ASV level
 
@@ -29,7 +29,7 @@ datafulllong<-gather(datafull, SampleID, count, "TNC01":"TNC64")
 
 
 ####
-### Reads per sample including chloroplast reads ----------------------------
+### + Reads per sample including chloroplast reads ----------------------------
 ####
 
 
@@ -53,7 +53,8 @@ datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
 metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
 
 # Number of QCd sequencing reads per sample
-ggplot(metadata,aes(SampleName,SampleTotalReads,fill=Station))+
+metadata %>% filter(SampleType=="gut" | SampleType=="water") %>% 
+  ggplot(aes(SampleName,SampleTotalReads,fill=Station))+
   geom_bar(stat="identity")+
   facet_grid(.~SampleType+Station, scales="free",space="free")+
   theme(legend.position = "none", axis.text.x = element_blank(),
@@ -65,7 +66,7 @@ ggplot(metadata,aes(SampleName,SampleTotalReads,fill=Station))+
 
 
 ####
-### 16S Rarefaction curve and coverage - Figure S2 ----------------------------------------------
+### Figure S2. 16S Rarefaction curve and coverage ----------------------------------------------
 ####
 
 datamat<-data[1:61] # remove controls
@@ -131,12 +132,11 @@ sd(coverage)
 
 
 
-### ASV level without chloro reads---------------------------------------------
-
 ####
-### Remove chloroplast reads and recalculate percent abundances ------------
+### + ASV level without chloroplast reads -----------------------------------------------
 ####
 
+# Remove chloroplast reads and recalculate percent abundances
 datafulllong<-gather(datafull, SampleID, count, "TNC01":"TNC64")
 
 # remove chloroplast reads
@@ -163,7 +163,7 @@ dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
 
 
 ####
-### Bar plots with Negative & Positive Controls - Figure S1 -----------------------------------------------------
+### Figure S1. Bar plots with Negative & Positive Controls -----------------------------------
 ####
 
 # sum ASV percentages by phylum
@@ -235,7 +235,7 @@ cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,25), labels=c("A","B"
 
 
 ####
-### Alpha diversity Plotting -----------------------------------------------------
+### Figure 3A. Alpha diversity -----------------------------------------------------
 ####
 
 #convert normalized data (with chloros removed) back to wide
@@ -248,13 +248,7 @@ diversitytotal<-diversity(dataASVtable, index="simpson")
 # add into metadata variable
 metadatags$Simpsons<-diversitytotal
 
-# make sub dataframes for stats if needed.
-dataag_gut<-filter(metadatags, SampleType=="gut")
-dataag_water<-filter(metadatags, SampleType=="water")
-
-
-####
-# Simpson's diversity plot - S1A
+#### Simpson's diversity plots
 gutdiv<-metadatags %>% filter(SampleType=="gut") %>% 
   ggplot(aes(x=Station,y=Simpsons, fill=Station))+
   geom_jitter(width=0.15, size=3, shape=23, alpha=0.8)+
@@ -264,7 +258,6 @@ gutdiv<-metadatags %>% filter(SampleType=="gut") %>%
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
   theme(legend.position = "none", plot.title = element_text(hjust=0.5))
-
 waterdiv<-metadatags %>% filter(SampleType=="water") %>% 
   ggplot(aes(x=Station,y=Simpsons, fill=Station))+
   geom_jitter(width=0.15, size=3, shape=23)+
@@ -277,24 +270,10 @@ waterdiv<-metadatags %>% filter(SampleType=="water") %>%
         plot.title = element_text(hjust=0.5))
 
 
-# generate legend for plotting
-divlegend<-ggplot(metadatags,aes(x=Station,y=Simpsons, fill=Station))+
-  geom_point() + facet_grid(~SampleType) + theme_bw()+
-  labs(x=NULL,y="Simpson's Index of Diversity",fill="Site")+
-  scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  theme(legend.position = c(.86,.33),
-        legend.text = element_text(size=14, colour="gray20"),
-        strip.background = element_rect("grey90"),
-        legend.background = element_rect(color="grey40"))
-
-
-
 
 ####
-### Alpha diversity stats -----------------------------------------------------
+### + Alpha diversity stats -----------------------------------------------------
 ####
-
 
 compare_means(data=dataag_water, Simpsons ~ Station, method="kruskal")
 kruskal.test(dataag_water$Simpsons, as.factor(dataag_water$Station))
@@ -319,7 +298,7 @@ compare_means(data=metadatags, Simpsons~Station, group.by="SampleType",
 
 
 ####
-### Beta diversity: NMDS Bray-Curtis----------------------------------------
+### Figure 3B. Beta diversity: NMDS Bray-Curtis ----------------
 ####
 
 # ellipse function
@@ -395,7 +374,7 @@ typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() +
 
 
 ####
-###  Within site beta-diversity - Figure 3C-----------------------------------------------------
+###  Figure 3C. Within site beta-diversity -----------------------------------------------------
 ####
 
 stationids<-dataag_gut %>% select(Station, SampleID)
@@ -414,7 +393,7 @@ braycurtisdistances<-
   # Remove the diagonal rows, where each sample was compared to itself
   filter(value!=0)
 
-braydistance<-ggplot(braycurtisdistances, aes(x=Station, y=value, fill=Station))+
+braydistanceplot<-ggplot(braycurtisdistances, aes(x=Station, y=value, fill=Station))+
   geom_jitter(width=0.15, size=2, shape=23, alpha=0.7)+
   geom_boxplot(alpha=0.8)+
   labs(x=NULL,y="within site dissimilarity index",fill="Site")+
@@ -429,7 +408,7 @@ compare_means(data=braycurtisdistances, value~Station, method="kruskal")
 
 
 ####
-### Build Figure 3 with cowplots ------------------------------------------
+### + Build Figure 3 with cowplots ------------------------------------------
 ####
 
 gutleg<-get_legend(gutNMDS+scale_linetype_discrete(guide = FALSE))
@@ -440,23 +419,21 @@ divplot<-plot_grid(gutdiv,waterdiv)
 nmds<-plot_grid(gutNMDS+theme(legend.position = "none"),
                 typeNMDS+theme(legend.position = "none"),
                 align="hv", axis="t", nrow=1)
-bottombraydistance<-plot_grid(braydistance, legends)
+bottombraydistance<-plot_grid(braydistanceplot, legends)
 
 plot_grid(divplot+theme(plot.margin = margin(0, 0, 0, 7)),
           nmds+draw_label("Bray-Curtis beta diversity (k=2)", size=11, x=0, y=0.5, angle=90), 
           bottombraydistance+draw_label("Bray-Curtis beta diversity", size=11, x=0, y=0.55, angle=90),
           nrow=3, align="v", axis="tl",rel_heights = c(50,60,50),
           labels = "AUTO")
-
-# 900x550
-ggsave("Figure3.png", width = 8, height = 9, dpi=400)
-ggsave("Figure3.pdf", width = 8, height = 9)
-ggsave("Figure3.svg", width = 8, height = 9)
+#ggsave("Figure3.png", width = 8, height = 9, dpi=400)
+#ggsave("Figure3.pdf", width = 8, height = 9)
+#ggsave("Figure3.svg", width = 8, height = 9)
 
 
 
 ####
-### Beta diversity stats - Table SXX -----------------------------------------------------
+### Table SXX. Beta diversity stats -----------------------------------------------------
 ####
 
 beta<-NULL
@@ -485,19 +462,17 @@ beta$bisnin<-adonis2(abund_table_gut[c(21:30,41:50),]~Station, data=dataag_gut[c
 beta$narnin<-adonis2(abund_table_gut[c(31:50),]~Station, data=dataag_gut[c(31:50),], by=NULL, method="bray", k=2)
 
 # by sample type
-adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
-beta$overallsampletype<-adonis2(abund_table_all~SampleType*Station, data=metadatags, by="terms", method="bray", k=2)
+beta$sampletypeonly <- adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
+beta$overallsampletype <- adonis2(abund_table_all~SampleType*Station, data=metadatags, by="terms", method="bray", k=2)
 
 # export adonis2 results to use as table
-beta %>% enframe() %>% unnest(cols=c(value)) %>% write.csv("betadiversity.csv")
-
-
-
+betanames <- beta %>% enframe() %>% unnest(cols=c(value)) %>% pull(name)
+beta %>% bind_rows() %>% rownames_to_column() %>% mutate(comparison=betanames) %>% write.csv("betadiversity.csv")
 
 
 
 ####
-### Core Microbiome - Figure XXX ----------------------------------------------
+### Figure SXX and Table SXX. Core Microbiome ----------------------------------------------
 ####
 
 coretaxa<-dataASVwide %>%
@@ -512,6 +487,7 @@ coretaxa<-dataASVwide %>%
   arrange(desc(n)) %>% filter(n>=40) %>% 
   # add back in the other metadata
   left_join(taxakey) %>% # write.csv("coremicrobiome16s.csv")
+  
   left_join(dataASVwide) %>% 
   left_join(metadatags) %>% 
   filter(SampleType=="gut") %>% 
