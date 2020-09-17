@@ -169,10 +169,9 @@ dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
 phylumperc<- datafulllongmeta %>%
   group_by(Phylum,SampleID, SampleName, SampleType, Station, TypeStationGroup) %>%
   dplyr::summarise(physum=sum(percent)) %>%
-  filter(SampleName != "NEG.CON" & SampleName != "NEG.CON.2")
-
-# show only the top 10 phyla, put the rest in "Other"
-phylumperc$PhylumOther<-forcats::fct_lump(f=phylumperc$Phylum, w=phylumperc$physum, other_level="Others", n=10)
+  filter(SampleName != "NEG.CON" & SampleName != "NEG.CON.2") %>% ungroup() %>% 
+  # show only the top 10 phyla, put the rest in "Other"
+  mutate(PhylumOther=forcats::fct_lump(f=Phylum, w=physum, other_level="Others", n=10))
 
 # define palette
 palette<-c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C",
@@ -180,7 +179,7 @@ palette<-c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C",
 
 barp<-ggplot(phylumperc,
        (aes(x=SampleName, y=physum,
-            fill=factor(PhylumOther, levels=c("Actinobacteria",  "Bacteroidetes","Cyanobacteria","Firmicutes","Fusobacteria","Planctomycetes","Proteobacteria", "Tenericutes","Verrucomicrobia","Unknown","Others")))))+
+            fill=factor(PhylumOther, levels=c("Actinobacteria",  "Bacteroidetes","Chloroflexi","Cyanobacteria","Firmicutes","Fusobacteria","Planctomycetes","Proteobacteria", "Tenericutes","Verrucomicrobia","Unknown","Others")))))+
   facet_grid(.~TypeStationGroup, scales="free", space="free")+
   geom_col(position="fill", alpha=0.8)+theme_minimal()+
   theme(legend.text = element_text(size=12, colour="gray20"),
@@ -195,10 +194,9 @@ barp<-ggplot(phylumperc,
 
 # mock control samples ASV percentages
 controlASVperc<- datafulllongmeta %>%
-  filter(SampleType=="control") %>%
-  filter(SampleName != "NEG.CON" & SampleName != "NEG.CON.2") %>%
+  filter(SampleName == "MOCK.CON" | SampleName == "MOCK.CON.2") %>%
   group_by(ASVID, Taxon, SampleName) %>%
-  dplyr::summarise(Taxonsum=sum(percent)) %>%
+  dplyr::summarise(Taxonsum=sum(percent)) %>% ungroup() %>% 
   mutate(TaxonOther=forcats::fct_lump(f=Taxon, w=Taxonsum, other_level="Others", n=10))
 
 palette2<-c("#8c48d6",
@@ -442,15 +440,16 @@ coretaxa<-dataASVwide %>%
   left_join(metadatags) %>% 
   filter(SampleType=="gut") %>% 
   # make a binary scale for when the ASV is present in each sample
-  mutate(percentbin=cut(percent, breaks=c(0,0.0000000001,1))) %>% 
+  mutate(presence=case_when(percent==0 ~ "0", TRUE ~ "1")) %>%
   mutate(taxonlabel=paste(Phylum,Class,Order,Family,Genus,Species,sep="; "))
 
 ggplot(coretaxa, 
-       aes(x=SampleID, y=reorder(taxonlabel,n), fill=percentbin))+
+       aes(x=SampleID, y=reorder(taxonlabel,n), fill=presence))+
   geom_tile(color="white")+
   facet_grid(.~Station,scales="free", space="free")+
-  scale_fill_manual(values="aquamarine4", na.value="grey80")+
+  scale_fill_manual(values=c("grey80","aquamarine4"))+
   scale_y_discrete(labels=wrap_format(50))+
   theme_minimal()+
   theme(legend.position = "none", axis.text.x=element_blank())+
   labs(x=NULL, y=NULL)
+

@@ -19,8 +19,8 @@ outline <- st_read("Metadata/NSDE66796/CUSPLine.shp")
 ggplot() + theme_bw()+
   geom_sf(data = outline, fill= "grey20") +
   geom_point(data, mapping = aes(x = Long, y = Lat, fill = Station), size=6, shape=21)+
-  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+ 
-  coord_sf(xlim = c(-71.8,-71.0), ylim = c(41.2,41.9), expand = FALSE) + 
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
+  coord_sf(xlim = c(-71.8,-71.0), ylim = c(41.2,41.9), expand = FALSE) +
   theme(panel.background = element_rect(fill = "white"))+
   labs(x=NULL, y=NULL)+theme(axis.text = element_text(size=10),legend.position = "none")
 
@@ -36,7 +36,7 @@ pcadata<-as.data.frame(data)
 rownames(pcadata)<-c(pcadata[,1]) # copy site names to rownames
 pcadatahisto<-pcadata[,c(4:12)] # remove lat/long from PCA
 
-# Calculate PCA 
+# Calculate PCA
 pca_result <- prcomp(pcadatahisto, scale=TRUE)
 pca_result$rotation <- -pca_result$rotation # rotate PC axes
 pca_result$rotation # check on variable
@@ -57,14 +57,14 @@ aplot<-autoplot(pca_result,
                                        "pH","Chlorophyll-a (\U003BCM)","Dissolved Oxygen \n(mg/L)\n"),
                 loadings.label.fontface="bold",
                 loadings.label.repel=TRUE, # don't overlap arrow labels
-                loadings.label.size=3.5, 
+                loadings.label.size=3.5,
                 loadings.label.colour="black",
                 loadings.colour=c("orange","orange",
                                   "cornflowerblue","cornflowerblue","cornflowerblue","cornflowerblue",
                                   "orange","orange","orange"))
 # adjust labels, colors, point shapes and plot
-aplot + 
-  geom_text(aes(label=Station), nudge_x=0.03, nudge_y=-0.06, color="grey20") + 
+aplot +
+  geom_text(aes(label=Station), nudge_x=0.03, nudge_y=-0.06, color="grey20") +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_shape_manual(values = c(21,22,23,24,25))+
   scale_y_continuous(limits=c(-.65, .65)) + scale_x_continuous(limits=c(-.7, .7))
@@ -73,7 +73,8 @@ aplot +
 # Table 1 correlations -----------------------------------------
 
 data %>%
-  pivot_longer("Salinity_ppt":"DO_mgL", names_to="parameter") %>% 
-  group_by(parameter) %>% 
+  pivot_longer("Salinity_ppt":"DO_mgL", names_to="parameter") %>%
+  group_by(parameter) %>%
   summarise(cor(Lat, value), method=c("pearson", "spearman"))
 # note: pearson and spearman give the same results
+# but use Spearman's since data is non-parametric and non-linear
