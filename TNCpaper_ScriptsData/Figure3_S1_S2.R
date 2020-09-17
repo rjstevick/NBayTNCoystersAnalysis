@@ -1,7 +1,7 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # 16S controls, rarefaction, and diversity plots
 # Figures 3, S1, and S2
-# RJS updated 0/17/2020 for reresubmission
+# RJS updated 09/17/2020 for reresubmission
 
 # 16S Amplicon data at ASV level
 
@@ -51,6 +51,9 @@ datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
 
 #select only gut, water
 metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
+dataag_gut<-filter(metadatags, SampleType=="gut")
+dataag_water<-filter(metadatags, SampleType=="water")
+
 
 # Number of QCd sequencing reads per sample
 metadata %>% filter(SampleType=="gut" | SampleType=="water") %>% 
@@ -161,6 +164,10 @@ datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
 #select only gut, water
 dataASVmetagw<-filter(datafulllongmeta, SampleType=="gut" | SampleType=="water")
 
+#convert normalized data (with chloros removed) back to wide
+dataASVwide<-select(dataASVmetagw, SampleID, ASVID, percent)
+dataASVtable<-spread(dataASVwide, ASVID, percent) %>%
+  tibble::column_to_rownames("SampleID")
 
 ####
 ### Figure S1. Bar plots with Negative & Positive Controls -----------------------------------
@@ -238,10 +245,6 @@ cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,25), labels=c("A","B"
 ### Figure 3A. Alpha diversity -----------------------------------------------------
 ####
 
-#convert normalized data (with chloros removed) back to wide
-dataASVwide<-select(dataASVmetagw, SampleID, ASVID, percent)
-dataASVtable<-spread(dataASVwide, ASVID, percent) %>%
-  tibble::column_to_rownames("SampleID")
 
 # calculate diversity
 diversitytotal<-diversity(dataASVtable, index="simpson")
@@ -257,7 +260,11 @@ gutdiv<-metadatags %>% filter(SampleType=="gut") %>%
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
-  theme(legend.position = "none", plot.title = element_text(hjust=0.5))
+  theme(legend.position = "none", plot.title = element_text(hjust=0.5))+
+  geom_signif(comparisons = list(c("3.BIS","4.NAR"),c("1.PVD", "4.NAR"), c("1.PVD","5.NIN")), 
+              map_signif_level=c("*"=0.01, "*"=0.05), vjust=0.5, y_position = c(1.05,1.1,1.15))+
+  stat_compare_means(label="p.format", label.y = 0.1, label.x="4.NAR", size=4)
+  
 waterdiv<-metadatags %>% filter(SampleType=="water") %>% 
   ggplot(aes(x=Station,y=Simpsons, fill=Station))+
   geom_jitter(width=0.15, size=3, shape=23)+
@@ -267,13 +274,16 @@ waterdiv<-metadatags %>% filter(SampleType=="water") %>%
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
   theme(legend.position = "none", axis.text.y = element_blank(), axis.ticks.y=element_blank(),
-        plot.title = element_text(hjust=0.5))
+        plot.title = element_text(hjust=0.5))+
+  stat_compare_means(label="p.format", label.y = 0.1, label.x="4.NAR", size=4)
 
 
+plot_grid(gutdiv,waterdiv,rel_widths = c(60,50))
 
 ####
 ### + Alpha diversity stats -----------------------------------------------------
 ####
+
 
 compare_means(data=dataag_water, Simpsons ~ Station, method="kruskal")
 kruskal.test(dataag_water$Simpsons, as.factor(dataag_water$Station))
@@ -328,16 +338,19 @@ for(g in levels(NMDS$Station)){
                                                      veganCovEllipse(ord[[g]]$cov,ord[[g]]$center,ord[[g]]$scale))),Station=g))}}
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Station),mean)
-gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Station), size=1) +
-  geom_point(size=4, alpha=0.9,aes(shape=Station))+scale_shape_manual(values = c(21,22,23,24,25))+
+adonis2gutsite<-adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
+
+gutNMDS<-ggplot(data=NMDS,aes(x,y))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2,colour=Station, lty=Station), size=1) +
+  geom_point(size=4, alpha=0.9,aes(fill=Station,colour=Station, shape=Station))+scale_shape_manual(values = c(21,22,23,24,25))+
   annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
   #  annotate("text",x=NMDS$x+0.2,y=NMDS$y+0.05,label=paste(NMDS$Station,NMDS$OysterNum),size=4, color="gray40") + # to determine which point is which
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
   theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",
-        legend.title = element_blank(),legend.box="horizontal")
+        legend.title = element_blank(),legend.box="horizontal")+
+  geom_text(data=adonis2gutsite, aes(x=1,y=-1.2,label=paste("Gut only:\np=",`Pr(>F)`[1],"**")))
 
 
 
@@ -361,15 +374,19 @@ for(g in levels(NMDS$Type)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Type),mean)
 head(NMDS.mean)
-typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Type), size=1) +
-  geom_point(size=4, alpha=0.9,aes(shape=Station))+
+adonis2type<-adonis2(abund_table_gut~Station, data=dataag_gut, by=NULL, method="bray", k=2)
+
+typeNMDS<-ggplot(data=NMDS,aes(x,y))+theme_bw() +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2,colour=Type, lty=Type), size=1) +
+  geom_point(size=4, alpha=0.9,aes(shape=Station,colour=Type,fill=Type))+
   annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=6, color="gray10") +
   scale_fill_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_colour_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_linetype_manual(values=c("solid","twodash"), labels=c("Gut","Water"))+
   scale_shape_manual(values = c(21,22,23,24,25))+
-  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",legend.title = element_blank())
+  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",legend.title = element_blank())+
+  geom_text(data=adonis2type, aes(x=1,y=-2,label=paste("p=",`Pr(>F)`[1],"**")))
+
 
 
 
@@ -399,12 +416,21 @@ braydistanceplot<-ggplot(braycurtisdistances, aes(x=Station, y=value, fill=Stati
   labs(x=NULL,y="within site dissimilarity index",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  theme_bw()+scale_y_continuous(limits=c(0,1.0))+
+  theme_bw()+scale_y_continuous(limits=c(0,1.19), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
   theme(legend.position = "none",
-        strip.background = element_rect("grey90"))
-
+        strip.background = element_rect("grey90"))+
+  geom_signif(comparisons = list(c("4.NAR","5.NIN"),c("1.PVD", "2.GB")), 
+              map_signif_level=TRUE, vjust=0.5, y_position = c(1.05,1.05))+
+  geom_signif(annotations = c("***"), y_position = 1.18, xmin=c(2), vjust=0.5, xmax=c(4.5),tip_length = c(0.08,0.04))+
+  geom_signif(annotations = c("", ""), y_position = 1.15, xmin=c(1,4), xmax=c(3,5))+
+  stat_compare_means(label="p.format", label.y = 0.1, label.x="4.NAR", size=4)
+  
+  
 compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH")
 compare_means(data=braycurtisdistances, value~Station, method="kruskal")
+
+compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH") %>% 
+  filter(p.adj<=0.05)
 
 
 ####
@@ -487,7 +513,6 @@ coretaxa<-dataASVwide %>%
   arrange(desc(n)) %>% filter(n>=40) %>% 
   # add back in the other metadata
   left_join(taxakey) %>% # write.csv("coremicrobiome16s.csv")
-  
   left_join(dataASVwide) %>% 
   left_join(metadatags) %>% 
   filter(SampleType=="gut") %>% 
@@ -495,13 +520,15 @@ coretaxa<-dataASVwide %>%
   mutate(presence=case_when(percent==0 ~ "0", TRUE ~ "1")) %>%
   mutate(taxonlabel=paste(Phylum,Class,Order,Family,Genus,Species,sep="; "))
 
-ggplot(coretaxa, 
+core16splot<-ggplot(coretaxa, 
        aes(x=SampleID, y=reorder(taxonlabel,n), fill=presence))+
   geom_tile(color="white")+
   facet_grid(.~Station,scales="free", space="free")+
   scale_fill_manual(values=c("grey80","aquamarine4"))+
   scale_y_discrete(labels=wrap_format(50))+
   theme_minimal()+
-  theme(legend.position = "none", axis.text.x=element_blank())+
+  theme(legend.position = "none", axis.text.x=element_blank(),
+        axis.text.y = element_text(lineheight=0.7))+
   labs(x=NULL, y=NULL)
+
 

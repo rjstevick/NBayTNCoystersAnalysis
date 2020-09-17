@@ -1,7 +1,7 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Compare taxonomy generated from RefSeq/metatranscriptomes and 16S data
 # Figures 4, S2, S3, and S5 in the publication
-# updated 4/16/2020 for resubmission
+# updated 9/17/2020 for reresubmission
 
 # Metaranscriptomic taxonomy data
 # 16S Amplicon data at order level
@@ -13,6 +13,7 @@ library(RColorBrewer)
 library(ggpubr)
 library(readxl)
 library(vegan)
+library(cowplot)
 
 data<-read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=2)
 taxakey<- read_xlsx("Taxonomy/SAMSA_metatranscriptomes_RefSeqtaxa_edit.xlsx", sheet=3)
@@ -81,7 +82,7 @@ ggplot(datatax,aes(x=as.factor(Sample),Percent,fill=Phylum))+
 
 
 
-# Add in  16S data 
+# Add in  16S data
 data16t<-read_xlsx("Taxonomy/16SallData_SILVAtaxa.xlsx", sheet="Level4-normtrim")
 data16tg<-tidyr::gather(data16t, Order, Percent, "Acidobacteria;Acidobacteriia;Solibacterales":"Unknown")
 # add in the extra taxa information from the key
@@ -135,7 +136,7 @@ library(plyr)
 alldatatax_norm <- plyr::ddply(alldatatax, .(Sample), transform, rescale=sqrt(Percent))
 
 # remove lowest abundance taxa
-toptax<-alldatatax_norm %>% group_by(Order) %>% 
+toptax<-alldatatax_norm %>% group_by(Order) %>%
   dplyr::summarise(sums=sum(Percent)) %>% # calculate sums
   top_n(30, wt=sums) %>% arrange(desc(sums)) %>% pull(Order) # extract top 30 Orders
 
@@ -295,7 +296,7 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
 
 
 ####
-### Figure S5A. Species level nmds ----------------------------------------------
+### Figure S5A. Species level NMDS ----------------------------------------------
 ####
 
 abund_tablesp<-data %>%
@@ -340,7 +341,7 @@ adonis2(abund_tablesp~Site, data=NMDS, by=NULL,method="bray", k=2)
 
 
 ####
-### Figure S5B. Order level nmds ----------------------------------------------
+### Figure S5B. Order level NMDS ----------------------------------------------
 ####
 
 abund_tableord<-dataord %>%
@@ -480,9 +481,9 @@ dataord %>%
   # keep orders that occur in at least 80% of samples
   arrange(desc(n)) %>% filter(n>=20) %>% # write.csv("coremicrobiome16s.csv")
   # add back in the other metadata
-  left_join(dataord) %>%  
+  left_join(dataord) %>%
   # make a binary scale for when the order is present in each sample
-  mutate(presence=case_when(sumOrder==0 ~ "0", TRUE ~ "1")) %>% 
+  mutate(presence=case_when(sumOrder==0 ~ "0", TRUE ~ "1")) %>%
   # now plot it
   ggplot(aes(x=Sample, y=reorder(Order,n), fill=presence))+
   geom_tile(color="white")+
@@ -491,6 +492,15 @@ dataord %>%
   theme(legend.position = "none")+
   labs(x=NULL, y=NULL)
 
+# make a dataframe of all possible combos
+all<-data %>%  filter(Percent!=0) %>% group_by(Taxa) %>% count() %>%
+  arrange(desc(n)) %>% filter(n>=20) %>% left_join(data) %>% expand(Taxa, 26:50) %>%
+  mutate(Sample=as.character(`26:50`)) %>%
+  select(-`26:50`)
+
+stations<-datatax %>% select(Sample, Station) %>%
+  group_by(Sample, Station) %>% summarise() %>%
+  full_join(all)
 
 # with species level
 coretaxa<-data %>%
@@ -500,17 +510,29 @@ coretaxa<-data %>%
   group_by(Taxa) %>% count() %>%
   # keep Taxa that occur in at least 80% of samples
   arrange(desc(n)) %>% filter(n>=20) %>%
+  right_join(stations) %>%
   # add back in the other metadata
-  left_join(taxakey) %>% # write.csv("coremicrobiome16s.csv")
+  left_join(taxakey) %>% # write.csv("coremicrobiomemetatrans.csv")
   left_join(data) %>%
   # make a binary scale for when the order is present in each sample
-  mutate(presence=case_when(TRUE ~ "1")) %>%
+  mutate(presence=case_when(is.na(Percent) ~ "0", TRUE ~ "1")) %>%
   mutate(taxonlabel=paste(Phylum,Taxa,sep="; "))
 
-ggplot(coretaxa,
-       aes(x=Sample, y=reorder(taxonlabel,n), fill=presence))+
+coremetatransplot <-
+  ggplot(coretaxa, aes(x=Sample, y=reorder(taxonlabel,n), fill=presence))+
   geom_tile(color="white")+
-  scale_fill_manual(values="aquamarine4", na.value="grey80")+
-  theme_minimal()+
-  theme(legend.position = "none", axis.text.x=element_blank())+
-  labs(x=NULL, y=NULL)
+  facet_grid(.~Station,scales="free", space="free")+
+  scale_fill_manual(values=c("grey80","aquamarine4"))+
+  theme_minimal()+labs(x=NULL, y=NULL)+
+  theme(legend.position = "none", axis.text.x=element_blank(),
+        strip.text=element_blank())
+
+plot_grid(core16splot, coremetatransplot,
+          nrow=2, align="v", axis="l", rel_heights = c(15,30),labels="AUTO")+
+  draw_label("DNA: 16S rRNA gene amplicons", size=11, x=1, y=0.82, angle=-90)+
+  draw_label("RNA: Metatranscriptomes", size=11, x=1, y=0.3, angle=-90)+
+  theme(plot.margin = margin(0, 10, 0, 0))
+
+ggsave("FigureSXX.png", width = 8, height = 12, dpi=400)
+ggsave("FigureSXX.pdf", width = 8, height = 12)
+ggsave("FigureSXX.svg", width = 8, height = 12)
