@@ -1,7 +1,7 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # 16S controls, rarefaction, and diversity plots
 # Figures 3, S1, and S2
-# RJS updated 6/30/2020 for resubmission
+# RJS updated 6/30/2020 for reresubmission
 
 # 16S Amplicon data at ASV level
 
@@ -15,6 +15,7 @@ library(ggpubr)
 library(vegan)
 library(stringr)
 library(scales)
+library(cowplot)
 
 #import data - ASV counts, **not normalized**
 data<-read_xlsx("Taxonomy/16SallData_SILVAtaxa.xlsx", sheet="ASVcounts")
@@ -179,7 +180,7 @@ palette<-c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C",
 
 barp<-ggplot(phylumperc,
        (aes(x=SampleName, y=physum,
-            fill=factor(PhylumOther, levels=c("Actinobacteria",  "Bacteroidetes","Chloroflexi","Cyanobacteria","Firmicutes","Fusobacteria","Planctomycetes","Proteobacteria", "Tenericutes","Verrucomicrobia","Unknown","Others")))))+
+            fill=factor(PhylumOther, levels=c("Actinobacteria",  "Bacteroidetes","Chloroflexi","Cyanobacteria","Firmicutes","Planctomycetes","Proteobacteria", "Tenericutes","Verrucomicrobia","Unknown","Others")))))+
   facet_grid(.~TypeStationGroup, scales="free", space="free")+
   geom_col(position="fill", alpha=0.8)+theme_minimal()+
   theme(legend.text = element_text(size=12, colour="gray20"),
@@ -225,9 +226,9 @@ ctrlp<-ggplot(dplyr::arrange(controlASVperc,TaxonOther), (aes(x=SampleName, y=Ta
 
 # Figure S1
 cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,25), labels=c("A","B"))
-ggsave("FigureS1.png", width = 15, height = 10, dpi=400)
-ggsave("FigureS1.pdf", width = 15, height = 10)
-ggsave("FigureS1.svg", width = 15, height = 10)
+#ggsave("FigureS1.png", width = 15, height = 10, dpi=400)
+#ggsave("FigureS1.pdf", width = 15, height = 10)
+#ggsave("FigureS1.svg", width = 15, height = 10)
 
 
 
@@ -254,16 +255,27 @@ dataag_water<-filter(metadatags, SampleType=="water")
 
 ####
 # Simpson's diversity plot - S1A
-divplot<-ggplot(metadatags,aes(x=Station,y=Simpsons, fill=Station))+
-  geom_boxplot()+
-  geom_point(size=4, shape=23)+
-  facet_grid(~SampleType, labeller=as_labeller(c(gut="Gut samples (n=10)", water="Water samples (n=2)"))) +
-  labs(x=NULL,y="Simpson's Index of Diversity",fill="Site")+
+gutdiv<-metadatags %>% filter(SampleType=="gut") %>% 
+  ggplot(aes(x=Station,y=Simpsons, fill=Station))+
+  geom_jitter(width=0.15, size=3, shape=23, alpha=0.8)+
+  geom_boxplot(alpha=0.8)+
+  labs(title="Gut samples (n=10)", x=NULL,y="Simpson's Index of Diversity",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  theme_bw()+scale_y_continuous(limits=c(0,1.0))+
-  theme(legend.position = "none",
-        strip.background = element_rect("grey90"))
+  theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
+  theme(legend.position = "none", plot.title = element_text(hjust=0.5))
+
+waterdiv<-metadatags %>% filter(SampleType=="water") %>% 
+  ggplot(aes(x=Station,y=Simpsons, fill=Station))+
+  geom_jitter(width=0.15, size=3, shape=23)+
+  geom_boxplot(alpha=0.8)+
+  labs(title="Water samples (n=2)", x=NULL,y=NULL,fill="Site")+
+  scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
+  theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
+  theme(legend.position = "none", axis.text.y = element_blank(), axis.ticks.y=element_blank(),
+        plot.title = element_text(hjust=0.5))
+
 
 # generate legend for plotting
 divlegend<-ggplot(metadatags,aes(x=Station,y=Simpsons, fill=Station))+
@@ -320,15 +332,12 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
 }
 
 # Get spread of gut points based on Station
-abund_table<-dataASVtable[c(1:50),]
+abund_table_gut<-dataASVtable[c(1:50),]
 meta_table<-dataag_gut
-
 grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
-sol<-metaMDS(abund_table,distance = "bray", k = 2, trymax = 50)
+sol<-metaMDS(abund_table_gut,distance = "bray", k = 2, trymax = 50)
 sol$stress
-stressplot(sol)
-# stress=0.19, R2=0.96
-
+stressplot(sol) # stress=0.19, R2=0.96
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
 plot.new()
 ord<-ordiellipse(sol, as.factor(grouping_info[,2]), display = "sites", kind ="sd", conf = 0.95, label = T)
@@ -340,7 +349,6 @@ for(g in levels(NMDS$Station)){
                                                      veganCovEllipse(ord[[g]]$cov,ord[[g]]$center,ord[[g]]$scale))),Station=g))}}
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Station),mean)
-#Now do the actual plotting
 gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() +
   geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Station), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Station))+scale_shape_manual(values = c(21,22,23,24,25))+
@@ -352,19 +360,15 @@ gutNMDS<-ggplot(data=NMDS,aes(x,y,colour=Station,fill=Station))+theme_bw() +
   theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",
         legend.title = element_blank(),legend.box="horizontal")
 
-adonis2(abund_table~Station, data=NMDS, by=NULL,method="bray", k=2)
 
 
 # Get spread of points based on Type
-abund_table<-dataASVtable[c(1:60),]
+abund_table_all<-dataASVtable[c(1:60),]
 meta_table<-metadatags
-
 grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
-sol<-metaMDS(abund_table,distance = "bray", k = 2, trymax = 50)
+sol<-metaMDS(abund_table_all,distance = "bray", k = 2, trymax = 50)
 sol$stress
-stressplot(sol)
-# stress=0.19, R2=0.96
-
+stressplot(sol) # stress=0.19, R2=0.96
 NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),
                 Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
 plot.new()
@@ -378,7 +382,6 @@ for(g in levels(NMDS$Type)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Type),mean)
 head(NMDS.mean)
-#Now do the actual plotting
 typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() +
   geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Type), size=1) +
   geom_point(size=4, alpha=0.9,aes(shape=Station))+
@@ -387,34 +390,107 @@ typeNMDS<-ggplot(data=NMDS,aes(x,y,colour=Type,fill=Type))+theme_bw() +
   scale_colour_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_linetype_manual(values=c("solid","twodash"), labels=c("Gut","Water"))+
   scale_shape_manual(values = c(21,22,23,24,25))+
-  # , labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
-  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",
-        legend.title = element_blank())
-
-adonis2(abund_table~Type, data=NMDS, by=NULL,method="bray", k=2)
+  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",legend.title = element_blank())
 
 
+
+####
+###  Within site beta-diversity - Figure 3C-----------------------------------------------------
+####
+
+stationids<-dataag_gut %>% select(Station, SampleID)
+
+braycurtisdistances<-
+  # calculate the dissimilarity matrix between each sample
+  vegdist(abund_table_gut, method="bray", k=2) %>% as.matrix() %>% as.data.frame() %>% 
+  # Add in the sites based on the rows (paired sample)
+  rownames_to_column(var="PairedID") %>% mutate(PairedStation=dataag_gut$Station) %>% 
+  # Make into longform based on the columns (OG SampleID)
+  pivot_longer(cols="TNC01":"TNC50", names_to="SampleID") %>% 
+  # Add in sites based on the columns (OG SampleID)
+  left_join(stationids) %>% 
+  # Remove rows where a sample is paired with a sample from another site
+  filter(PairedStation==Station) %>% 
+  # Remove the diagonal rows, where each sample was compared to itself
+  filter(value!=0)
+
+braydistance<-ggplot(braycurtisdistances, aes(x=Station, y=value, fill=Station))+
+  geom_jitter(width=0.15, size=2, shape=23, alpha=0.7)+
+  geom_boxplot(alpha=0.8)+
+  labs(x=NULL,y="within site dissimilarity index",fill="Site")+
+  scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
+  scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
+  theme_bw()+scale_y_continuous(limits=c(0,1.0))+
+  theme(legend.position = "none",
+        strip.background = element_rect("grey90"))
+
+compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH")
+compare_means(data=braycurtisdistances, value~Station, method="kruskal")
 
 
 ####
 ### Build Figure 3 with cowplots ------------------------------------------
 ####
 
-gutleg<-cowplot::get_legend(gutNMDS+scale_linetype_discrete(guide = FALSE))
-typeleg<-cowplot::get_legend(typeNMDS+scale_shape_discrete(guide = FALSE))
-divleg<-cowplot::get_legend(divlegend+theme(legend.title = element_blank(), legend.position = "right", legend.background = element_rect(color="white")))
-nmds<-cowplot::plot_grid(gutNMDS+theme(legend.position = "none"),
-                         typeNMDS+theme(legend.position = "none"),
-                         align="hv", axis="t",nrow=1)
+gutleg<-get_legend(gutNMDS+scale_linetype_discrete(guide = FALSE))
+typeleg<-get_legend(typeNMDS+scale_shape_discrete(guide = FALSE))
+legends<-plot_grid(gutleg, typeleg, ncol = 2,rel_heights = c(20,50))
 
-plots<-cowplot::plot_grid(divplot+theme(legend.position = "none"),nmds, nrow=2,
-                          align="v", axis="l",rel_heights = c(40,60))
-legends<-cowplot::plot_grid(divleg,typeleg,gutleg, ncol = 1,rel_heights = c(50,20,50))
+divplot<-plot_grid(gutdiv,waterdiv)
+nmds<-plot_grid(gutNMDS+theme(legend.position = "none"),
+                typeNMDS+theme(legend.position = "none"),
+                align="hv", axis="t", nrow=1)
+bottombraydistance<-plot_grid(braydistance, legends)
 
+plot_grid(divplot+theme(plot.margin = margin(0, 0, 0, 7)),
+          nmds+draw_label("Bray-Curtis beta diversity (k=2)", size=11, x=0, y=0.5, angle=90), 
+          bottombraydistance+draw_label("Bray-Curtis beta diversity", size=11, x=0, y=0.55, angle=90),
+          nrow=3, align="v", axis="tl",rel_heights = c(50,60,50),
+          labels = "AUTO")
 
-cowplot::plot_grid(plots,legends, ncol=2, rel_widths = c(80,20), align="hv", axis="tbr")
 # 900x550
-# label y as "Bray-Curtis beta diversity (k=2)" in Inkscape
+ggsave("Figure3.png", width = 8, height = 9, dpi=400)
+ggsave("Figure3.pdf", width = 8, height = 9)
+ggsave("Figure3.svg", width = 8, height = 9)
+
+
+
+####
+### Beta diversity stats - Table SXX -----------------------------------------------------
+####
+
+beta<-NULL
+
+# by station
+beta$overallsites<-adonis2(abund_table_gut~Station, data=dataag_gut, by=NULL, method="bray", k=2)
+# pvd vs gb
+beta$pvdgb<-adonis2(abund_table_gut[c(1:20),]~Station, data=dataag_gut[c(1:20),], by=NULL, method="bray", k=2)
+# pvd vs bis
+beta$pvdbis<-adonis2(abund_table_gut[c(1:10,21:30),]~Station, data=dataag_gut[c(1:10,21:30),], by=NULL, method="bray", k=2)
+# pvd vs nar
+beta$pvdnar<-adonis2(abund_table_gut[c(1:10,31:40),]~Station, data=dataag_gut[c(1:10,31:40),], by=NULL, method="bray", k=2)
+# pvd vs nin
+beta$pvdnin<-adonis2(abund_table_gut[c(1:10,41:50),]~Station, data=dataag_gut[c(1:10,41:50),], by=NULL, method="bray", k=2)
+# gb vs bis
+beta$gbbis<-adonis2(abund_table_gut[c(11:30),]~Station, data=dataag_gut[c(11:30),], by=NULL, method="bray", k=2)
+# gb vs nar
+beta$gbnar<-adonis2(abund_table_gut[c(11:20,31:40),]~Station, data=dataag_gut[c(11:20,31:40),], by=NULL, method="bray", k=2)
+# gb vs nin
+beta$gbnin<-adonis2(abund_table_gut[c(11:20,41:50),]~Station, data=dataag_gut[c(11:20,41:50),], by=NULL, method="bray", k=2)
+# bis vs nar
+beta$bisnar<-adonis2(abund_table_gut[c(21:40),]~Station, data=dataag_gut[c(21:40),], by=NULL, method="bray", k=2)
+# bis vs nin
+beta$bisnin<-adonis2(abund_table_gut[c(21:30,41:50),]~Station, data=dataag_gut[c(21:30, 41:50),], by=NULL, method="bray", k=2)
+# nar vs nin
+beta$narnin<-adonis2(abund_table_gut[c(31:50),]~Station, data=dataag_gut[c(31:50),], by=NULL, method="bray", k=2)
+
+# by sample type
+adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
+beta$overallsampletype<-adonis2(abund_table_all~SampleType*Station, data=metadatags, by="terms", method="bray", k=2)
+
+# export adonis2 results to use as table
+beta %>% enframe() %>% unnest(cols=c(value)) %>% write.csv("betadiversity.csv")
+
 
 
 
@@ -435,7 +511,7 @@ coretaxa<-dataASVwide %>%
   # keep ASVs that occur in at least 80% of samples
   arrange(desc(n)) %>% filter(n>=40) %>% 
   # add back in the other metadata
-  left_join(taxakey) %>% 
+  left_join(taxakey) %>% # write.csv("coremicrobiome16s.csv")
   left_join(dataASVwide) %>% 
   left_join(metadatags) %>% 
   filter(SampleType=="gut") %>% 
