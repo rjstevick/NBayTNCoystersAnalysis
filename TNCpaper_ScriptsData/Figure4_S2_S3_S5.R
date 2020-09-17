@@ -35,8 +35,8 @@ dataord <- datatax %>% group_by(Order, Sample) %>%
 condenseddataord<-datatax %>% select(Sample, Order, Percent, SampleType) %>%
   group_by(Sample, Order, SampleType) %>%
   dplyr::summarise(PercentSum=sum(Percent)) %>% ungroup()
-dataordtab<-spread(condenseddataord, Order, PercentSum) %>%
-  column_to_rownames("Sample")
+dataordtab<-spread(condenseddataord, Order, PercentSum)
+rownames(dataordtab) <- dataordtab$Sample
 
 # make a ginormous palette
 palette<-c(brewer.pal(12, "Set3"),brewer.pal(8, "Set2"),brewer.pal(12, "Set3"),
@@ -80,9 +80,8 @@ ggplot(datatax,aes(x=as.factor(Sample),Percent,fill=Phylum))+
   scale_y_continuous(labels = scales::percent)
 
 
-##########################################################################################
 
-# add in  16S data --------------------------------------------
+# Add in  16S data 
 data16t<-read_xlsx("Taxonomy/16SallData_SILVAtaxa.xlsx", sheet="Level4-normtrim")
 data16tg<-tidyr::gather(data16t, Order, Percent, "Acidobacteria;Acidobacteriia;Solibacterales":"Unknown")
 # add in the extra taxa information from the key
@@ -127,23 +126,22 @@ ggplot(alldatatax,aes(x=as.factor(Sample),Percent,fill=Phylum))+
 
 
 
-## HEATMAP ----------------
+####
+### Figure 4B. Heatmap of most abundant taxa by site and sequencing type ----------------------------------------------
+####
 
-# normalize
+# squareroot transformation for easier visualization
 library(plyr)
-alldatatax_norm<-ddply(alldatatax,.(Sample),transform,rescale=sqrt(Percent))
+alldatatax_norm <- plyr::ddply(alldatatax, .(Sample), transform, rescale=sqrt(Percent))
 
 # remove lowest abundance taxa
-alldatatax_normg<- alldatatax_norm %>% dplyr::group_by(Order) # group
-taxsums<-dplyr::summarise(alldatatax_normg, sums=sum(Percent)) # calculate sums
-taxsums<-taxsums[order(-taxsums$sums),] # reorder
-toptax<-taxsums[1:30,] # extract top 30 Orders
-topdatatax_norm <- alldatatax_norm[alldatatax_norm$Order %in% toptax$Order,]
+toptax<-alldatatax_norm %>% group_by(Order) %>% 
+  dplyr::summarise(sums=sum(Percent)) %>% # calculate sums
+  top_n(30, wt=sums) %>% arrange(desc(sums)) %>% pull(Order) # extract top 30 Orders
 
+topdatatax_norm <- filter(alldatatax_norm, Order %in% toptax)
 
-## FIGURE 4B ##############################################
-# 1030x550
-ggplot(topdatatax_norm, aes(Sample, Order_Name)) +
+ggplot(topdatatax_norm, aes(Sample, Order)) +
   geom_tile(aes(fill = rescale),colour = "white") + ggpubr::theme_transparent() +
   facet_grid(factor(Phylum, levels=c("Actinobacteria","Bacteroidetes","Cyanobacteria","Firmicutes","Fusobacteria",
                                      "Proteobacteria","Tenericutes","Verrucomicrobia","Unknown"))~
@@ -151,8 +149,7 @@ ggplot(topdatatax_norm, aes(Sample, Order_Name)) +
              space="free", scales="free")+
   scale_fill_gradientn(na.value = "salmon",labels = scales::percent,limits=c(0,1),
                        colours=c("white","#fecc5c","#fd8d3c","#f03b20","#bd0026","darkred"))+
-  scale_x_discrete(expand = c(0, 0)) +
-  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
   theme(legend.position = "bottom",axis.ticks = element_blank(),
         axis.text.y = element_text(size=10, colour="grey40"),
         axis.text.x = element_blank(),
@@ -162,15 +159,18 @@ ggplot(topdatatax_norm, aes(Sample, Order_Name)) +
         strip.background = element_rect(fill="white", colour="white"),
         strip.text = element_text(size=8, colour="grey40"))+
   labs(y="Most abundant taxa (Order level)", x=NULL, fill="Relative\nPercent\nAbundance")
-
-unique(topdatatax_norm$Phylum)
-
+# 1030x550
 
 
-## VENN DIAGRAM --------------------
+
+## VENN DIAGRAMS --------------------
 
 library(VennDiagram)
 library(gplots)
+library(UpSetR)
+library(reshape2)
+library(ComplexHeatmap)
+theme_set(theme_bw())
 
 # subset data
 gutdata16t<-data16t[data16t$SampleType=="gut", apply(data16t[data16t$SampleType=="gut",], MARGIN=2, function(x) any(x >0))]
@@ -202,22 +202,11 @@ hey<- venn(list("gut 16S"=gut16S, "water 16S"=water16S, "gut metatranscriptome"=
 summaryvenn<-attr(hey, "intersections")
 summaryvennsites<-attr(siteshey, "intersections")
 
-
-
-## UPSETR plots --------------------
-
-library(UpSetR)
-library(reshape2)
-library(ComplexHeatmap)
-
 set1 <- guttrans
 set2 <- gut16S
 set3 <- water16S
 read_sets = list(gutRNA = set1,gut16S = set2, water16S = set3)
 m = make_comb_mat(read_sets)
-
-
-theme_set(theme_bw())
 
 upset(fromList(read_sets),
       number.angles = 0, sets=c("gutRNA", "gut16S", "water16S"), point.size = 5, line.size = 1.3,
@@ -229,8 +218,12 @@ UpSet(t(m), set_order = order(c("water16S","gutRNA","gut16S")),
       top_annotation = upset_top_annotation(t(m),bar_width = 0.9))
 
 
-## FIGURE 4A ##############################################
-#1000x155
+
+####
+### Figure 4A. Upset plot of orders shared between sequencing types ----------------------------------------------
+####
+
+
 UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")),
       pt_size = unit(.35, "cm"),lwd=3,
       left_annotation = rowAnnotation(" " = anno_barplot(set_size(m), bar_width=0.7,
@@ -240,9 +233,7 @@ UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")),
                             width = unit(4, "cm"))),
       right_annotation = NULL,row_names_side = "left",
       top_annotation = upset_top_annotation(m,bar_width = 0.9))
-
-
-# --------------------------------------------------------
+#1000x155
 
 read_sets = list("1.PVD Gut 16S"=gut16S1,
                  "2.GB Gut 16S"=gut16S2,
@@ -253,7 +244,11 @@ read_sets = list("1.PVD Gut 16S"=gut16S1,
 mgutw = make_comb_mat(read_sets)
 
 
-## FIGURE S3 ##############################################
+
+####
+### Figure S3. Upset plot of orders shared in 16S samples  ----------------------------------------------
+####
+
 #900x400
 
 UpSet(mgutw,comb_col = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey40",
@@ -278,8 +273,7 @@ UpSet(mgutw,comb_col = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey
 
 
 
-### NMDS of Metatranscriptome taxonomy -----------------
-###################################################################################
+### + NMDS of Metatranscriptome taxonomy -----------------
 
 Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
           "2.GB","2.GB","2.GB","2.GB","2.GB",
@@ -297,7 +291,12 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
 }
 
 
-# Species level -----------
+
+
+
+####
+### Figure S5A. Species level nmds ----------------------------------------------
+####
 
 abund_tablesp<-data %>%
   select(Sample, Taxa, Percent) %>%
@@ -323,7 +322,6 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-## FIGURE S5A ##############################################
 metatranssp<-
   ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
   geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
@@ -341,7 +339,9 @@ adonis2(abund_tablesp~Site, data=NMDS, by=NULL,method="bray", k=2)
 
 
 
-# Order level -------------------------------
+####
+### Figure S5B. Order level nmds ----------------------------------------------
+####
 
 abund_tableord<-dataord %>%
   select(Sample, Order, sumOrder) %>%
@@ -367,7 +367,6 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-## FIGURE S5B ##############################################
 metatransord<-
   ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
   geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
@@ -383,15 +382,17 @@ metatransord<-
 
 adonis2(abund_tableord~Site, data=NMDS, by=NULL,method="bray", k=2)
 
+####
+### + Combine Figure S5 ----------------------------------------------
+####
 
-## FIGURE S5 TOTAL ##############################################
 #1000x800
 cowplot::plot_grid(metatranssp, metatransord+theme(legend.position="none"),
                    get_legend(metatransord))
 
 
 ####
-### Metatranscriptome Rarefaction curve - Figure S2 ----------------------------------------------
+### Figure S2. Metatranscriptome Rarefaction curve ----------------------------------------------
 ####
 
 # Load in the raw annotation data
@@ -466,8 +467,9 @@ sd(coverage)
 
 
 ####
-### Core Microbiome - Figure XXX ----------------------------------------------
+### Figure SXX and Table SXX. Core Microbiome ----------------------------------------------
 ####
+
 
 # with order level
 dataord %>%
@@ -476,9 +478,9 @@ dataord %>%
   # group by order and the count the number of samples it occurs in
   group_by(Order) %>% count() %>%
   # keep orders that occur in at least 80% of samples
-  arrange(desc(n)) %>% filter(n>=20) %>%
+  arrange(desc(n)) %>% filter(n>=20) %>% # write.csv("coremicrobiome16s.csv")
   # add back in the other metadata
-  left_join(dataord) %>%
+  left_join(dataord) %>%  
   # make a binary scale for when the order is present in each sample
   mutate(presence=case_when(sumOrder==0 ~ "0", TRUE ~ "1")) %>% 
   # now plot it
@@ -499,8 +501,8 @@ coretaxa<-data %>%
   # keep Taxa that occur in at least 80% of samples
   arrange(desc(n)) %>% filter(n>=20) %>%
   # add back in the other metadata
+  left_join(taxakey) %>% # write.csv("coremicrobiome16s.csv")
   left_join(data) %>%
-  left_join(taxakey) %>%
   # make a binary scale for when the order is present in each sample
   mutate(presence=case_when(TRUE ~ "1")) %>%
   mutate(taxonlabel=paste(Phylum,Taxa,sep="; "))
