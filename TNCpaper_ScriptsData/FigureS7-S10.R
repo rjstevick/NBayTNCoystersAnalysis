@@ -1,19 +1,15 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Script to analyze gene-level functional expression from SAMSA
-# Figures S6, S7, S8, S9
-# updated 4/16/2020 for resubmission
+# Figures S7, S8, S9, S10
+# updated 9/18/2020 for resubmission
 
 # Metaranscriptomic functional data at gene level
 
-library("ggplot2")
-library("tidyr")
-library("dplyr")
-library("readxl")
-library("gridExtra")
-library("leaflet")
-library("RColorBrewer")
-library("viridis")
-library("pheatmap")
+library(tidyverse)
+library(readxl)
+library(gridExtra)
+library(RColorBrewer)
+library(pheatmap)
 
 data<-read_excel("Function/DESeq_subsys_results_level4_summary.xlsx", sheet=1)
 hierarchy<-read_excel("Function/DESeq_subsys_results_level4_summary.xlsx", sheet=2)
@@ -67,7 +63,7 @@ datahdenitg$Level3f<-factor(datahdenitg$Level3,
 ggplot(datahdenitg, aes(Level4, foldchange, label=signif,
                          fill=foldvalue,color=signif))+theme_minimal()+
   geom_tile(size=0.7)+facet_grid(Level3f~., scales="free", space="free")+
-  scale_fill_viridis()+coord_flip()+
+  scale_fill_viridis_c()+coord_flip()+
   labs(x=NULL, y=NULL)+
   geom_text(size=5, nudge_x=-0.3)+
   theme(legend.position="bottom",
@@ -106,7 +102,7 @@ ggplot(datahphosg, aes(Level4, foldvalue,fill=foldchange))+
 ggplot(datahphosg,aes(Level4, foldchange, label=signif,
                       fill=foldvalue,color=signif))+theme_minimal()+
   geom_tile(size=0.7)+facet_grid(Level3~., scales="free", space="free")+
-  scale_fill_viridis()+coord_flip()+
+  scale_fill_viridis_c()+coord_flip()+
   labs(x=NULL, y=NULL)+
   geom_text(size=5, nudge_x=-0.3)+
   theme(legend.position="bottom",
@@ -154,7 +150,7 @@ ggplot(datahstressg, aes(Level4, foldvalue,fill=foldchange))+
 ggplot(datahstressg, aes(Level4, foldchange, label=signif,
                          fill=foldvalue,color=signif))+theme_minimal()+
   geom_tile(size=0.7)+facet_grid(Level2~., scales="free", space="free")+
-  scale_fill_viridis()+coord_flip()+
+  scale_fill_viridis_c()+coord_flip()+
   labs(x=NULL, y=NULL)+
   geom_text(size=5, nudge_x=-0.3)+
   theme(legend.position="bottom",

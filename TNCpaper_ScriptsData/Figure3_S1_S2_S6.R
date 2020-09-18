@@ -1,7 +1,7 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # 16S controls, rarefaction, and diversity plots
-# Figures 3, S1, and S2
-# RJS updated 09/17/2020 for reresubmission
+# Figures 3, S1, S2, and S6. Tables S2 and S3
+# RJS updated 09/18/2020 for reresubmission
 
 # 16S Amplicon data at ASV level
 
@@ -48,12 +48,6 @@ datafulllong<-
 #add in the metadata
 datafulllongmeta<-full_join(datafulllong, metadata, by = "SampleID",
                             copy=FALSE, suffix=c(".x",".y"))
-
-#select only gut, water
-metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
-dataag_gut<-filter(metadatags, SampleType=="gut")
-dataag_water<-filter(metadatags, SampleType=="water")
-
 
 # Number of QCd sequencing reads per sample
 metadata %>% filter(SampleType=="gut" | SampleType=="water") %>% 
@@ -246,10 +240,15 @@ cowplot::plot_grid(barp, ctrlp, nrow=2, rel_heights = c(60,25), labels=c("A","B"
 ####
 
 
+#select only gut, water
+metadatags<-filter(metadata, SampleType=="gut" | SampleType=="water")
 # calculate diversity
 diversitytotal<-diversity(dataASVtable, index="simpson")
 # add into metadata variable
 metadatags$Simpsons<-diversitytotal
+
+
+
 
 #### Simpson's diversity plots
 gutdiv<-metadatags %>% filter(SampleType=="gut") %>% 
@@ -259,7 +258,7 @@ gutdiv<-metadatags %>% filter(SampleType=="gut") %>%
   labs(title="Gut samples (n=10)", x=NULL,y="Simpson's Index of Diversity",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
+  theme_bw()+scale_y_continuous(limits=c(0,1.19), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
   theme(legend.position = "none", plot.title = element_text(hjust=0.5))+
   geom_signif(comparisons = list(c("3.BIS","4.NAR"),c("1.PVD", "4.NAR"), c("1.PVD","5.NIN")), 
               map_signif_level=c("*"=0.01, "*"=0.05), vjust=0.5, y_position = c(1.05,1.1,1.15))+
@@ -272,7 +271,7 @@ waterdiv<-metadatags %>% filter(SampleType=="water") %>%
   labs(title="Water samples (n=2)", x=NULL,y=NULL,fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
-  theme_bw()+scale_y_continuous(limits=c(0,1.2), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
+  theme_bw()+scale_y_continuous(limits=c(0,1.19), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
   theme(legend.position = "none", axis.text.y = element_blank(), axis.ticks.y=element_blank(),
         plot.title = element_text(hjust=0.5))+
   stat_compare_means(label="p.format", label.y = 0.1, label.x="4.NAR", size=4)
@@ -284,27 +283,25 @@ plot_grid(gutdiv,waterdiv,rel_widths = c(60,50))
 ### + Alpha diversity stats -----------------------------------------------------
 ####
 
+dataag_gut<-filter(metadatags, SampleType=="gut")
+dataag_water<-filter(metadatags, SampleType=="water")
 
+# within water samples
 compare_means(data=dataag_water, Simpsons ~ Station, method="kruskal")
 kruskal.test(dataag_water$Simpsons, as.factor(dataag_water$Station))
-# From the output of the Kruskal-Wallis test, we know that there is a significant difference between groups, but we don't know which pairs of groups are different.
-# It's possible to use the function pairwise.wilcox.test() to calculate pairwise comparisons between group levels with corrections for multiple testing.
-pairwise.wilcox.test(dataag_water$Simpsons, dataag_water$Station,
-                     p.adjust.method = "BH")
+# From the output of the Kruskal-Wallis test, we know that there is no significant difference between groups. 
+pairwise.wilcox.test(dataag_water$Simpsons, dataag_water$Station, p.adjust.method = "BH")
 
-
+# within gut samples
 compare_means(data=dataag_gut, Simpsons ~ Station, method="kruskal")
 kruskal.test(dataag_gut$Simpsons, as.factor(dataag_gut$Station))
 # From the output of the Kruskal-Wallis test, we know that there is a significant difference between groups, but we don't know which pairs of groups are different.
 # It's possible to use the function pairwise.wilcox.test() to calculate pairwise comparisons between group levels with corrections for multiple testing.
-pairwise.wilcox.test(dataag_gut$Simpsons, dataag_gut$Station,
-                     p.adjust.method = "BH")
+pairwise.wilcox.test(dataag_gut$Simpsons, dataag_gut$Station, p.adjust.method = "BH")
+
 
 # all together now!
-compare_means(data=metadatags, Simpsons~Station, group.by="SampleType",
-              method="wilcox", p.adjust.method = "BH")
-
-
+compare_means(data=metadatags, Simpsons~Station, group.by="SampleType", method="wilcox", p.adjust.method = "BH")
 
 
 ####
@@ -320,65 +317,67 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
   t(center + scale * t(Circle %*% chol(cov)))
 }
 
-# Get spread of gut points based on Station
+## NMDS with only gut samples, examine site effect
+# subset data
 abund_table_gut<-dataASVtable[c(1:50),]
-meta_table<-dataag_gut
-grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
+# generate bray-curtis results
 sol<-metaMDS(abund_table_gut,distance = "bray", k = 2, trymax = 50)
 sol$stress
 stressplot(sol) # stress=0.19, R2=0.96
-NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
+# get spread of gut points based on Station and generate ellipses
+NMDSgut=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(dataag_gut$SampleType),Station=as.factor(dataag_gut$Station),OysterNum=as.factor(dataag_gut$OysterNum))
 plot.new()
-ord<-ordiellipse(sol, as.factor(grouping_info[,2]), display = "sites", kind ="sd", conf = 0.95, label = T)
+ordgut<-ordiellipse(sol, as.factor(dataag_gut$Station), display = "sites", kind ="sd", conf = 0.95, label = T)
 dev.off()
-df_ell <- data.frame()
-for(g in levels(NMDS$Station)){
-  if(g!="" && (g %in% names(ord))){
-    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS[NMDS$Station==g,],
-                                                     veganCovEllipse(ord[[g]]$cov,ord[[g]]$center,ord[[g]]$scale))),Station=g))}}
-head(df_ell)
-NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Station),mean)
-adonis2gutsite<-adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
-
-gutNMDS<-ggplot(data=NMDS,aes(x,y))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2,colour=Station, lty=Station), size=1) +
-  geom_point(size=4, alpha=0.9,aes(fill=Station,colour=Station, shape=Station))+scale_shape_manual(values = c(21,22,23,24,25))+
-  annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
-  #  annotate("text",x=NMDS$x+0.2,y=NMDS$y+0.05,label=paste(NMDS$Station,NMDS$OysterNum),size=4, color="gray40") + # to determine which point is which
+# make a dataframe with all the information needed for plotting
+df_ellgut <- data.frame()
+for(g in levels(NMDSgut$Station)){
+  if(g!="" && (g %in% names(ordgut))){
+    df_ellgut <- rbind(df_ellgut, cbind(as.data.frame(with(NMDSgut[NMDSgut$Station==g,], veganCovEllipse(ordgut[[g]]$cov,ordgut[[g]]$center,ordgut[[g]]$scale))),Station=g))}}
+head(df_ellgut)
+# make a dataframe with the ellipse centers
+NMDSgut.mean=aggregate(NMDSgut[,1:2],list(group=NMDSgut$Station),mean)
+# calculate PERMANOVA significance with adonis2
+adonis2gutsite<-adonis2(abund_table_gut~Station, data=dataag_gut, by=NULL, method="bray", k=2)
+# plot the NMDS
+gutNMDS<-ggplot(data=NMDSgut, aes(x,y))+
+  # add the ellipses
+  geom_path(data=df_ellgut, aes(x=NMDS1, y=NMDS2,colour=Station, lty=Station), size=1) +
+  # add the points for each sample
+  geom_point(size=4, alpha=0.9,aes(fill=Station,colour=Station, shape=Station))+
+  # add the labels for each site at the center of the ellipses
+  geom_text(data=NMDSgut.mean, aes(x=x,y=y,label=group),size=5, color="gray40") +
+  # add the global p-value from the adonis2 function
+  geom_text(data=adonis2gutsite, aes(x=1,y=-1.2,label=paste("Gut only:\np=",`Pr(>F)`[1],"**")))+
+  # edit theme and colors, etc.
+  scale_shape_manual(values = c(21,22,23,24,25))+
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
-  scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
-  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right",
-        legend.title = element_blank(),legend.box="horizontal")+
-  geom_text(data=adonis2gutsite, aes(x=1,y=-1.2,label=paste("Gut only:\np=",`Pr(>F)`[1],"**")))
+  scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), 
+                        labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
+  theme(legend.text = element_text(size=14, colour="gray20"), legend.position = "right", legend.title = element_blank(), legend.box="horizontal")
 
 
-
-# Get spread of points based on Type
+## NMDS with all samples, examine sample type effect
 abund_table_all<-dataASVtable[c(1:60),]
-meta_table<-metadatags
-grouping_info<-data.frame(meta_table$SampleType, meta_table$Station, meta_table$OysterNum)
 sol<-metaMDS(abund_table_all,distance = "bray", k = 2, trymax = 50)
 sol$stress
 stressplot(sol) # stress=0.19, R2=0.96
-NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],Type=as.factor(grouping_info[,1]),
-                Station=as.factor(grouping_info[,2]),OysterNum=as.factor(grouping_info[,3]))
+NMDS=data.frame(x=sol$point[,1],y=sol$point[,2],SampleType=as.factor(metadatags$SampleType), Station=as.factor(metadatags$Station),OysterNum=as.factor(metadatags$OysterNum))
 plot.new()
-ord<-ordiellipse(sol, as.factor(grouping_info[,1]), display = "sites", kind ="sd", conf = 0.95, label = T)
+ord<-ordiellipse(sol, as.factor(metadatags$SampleType), display = "sites", kind ="sd", conf = 0.95, label = T)
 dev.off()
 df_ell <- data.frame()
-for(g in levels(NMDS$Type)){
+for(g in levels(NMDS$SampleType)){
   if(g!="" && (g %in% names(ord))){
-    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS[NMDS$Type==g,],
-                                                     veganCovEllipse(ord[[g]]$cov,ord[[g]]$center,ord[[g]]$scale))),Type=g))}}
+    df_ell <- rbind(df_ell, cbind(as.data.frame(with(NMDS[NMDS$SampleType==g,], veganCovEllipse(ord[[g]]$cov,ord[[g]]$center,ord[[g]]$scale))),SampleType=g))}}
 head(df_ell)
-NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Type),mean)
+NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$SampleType),mean)
 head(NMDS.mean)
-adonis2type<-adonis2(abund_table_gut~Station, data=dataag_gut, by=NULL, method="bray", k=2)
-
-typeNMDS<-ggplot(data=NMDS,aes(x,y))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2,colour=Type, lty=Type), size=1) +
-  geom_point(size=4, alpha=0.9,aes(shape=Station,colour=Type,fill=Type))+
+adonis2type<-adonis2(abund_table_all~SampleType, data=metadatags, by=NULL, method="bray", k=2)
+typeNMDS<-ggplot(data=NMDS,aes(x,y))+
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2,colour=SampleType, lty=SampleType), size=1) +
+  geom_point(size=4, alpha=0.9,aes(shape=Station,colour=SampleType,fill=SampleType))+
   annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=6, color="gray10") +
   scale_fill_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
   scale_colour_manual(values=c("orange","darkred"), labels=c("Gut","Water"))+
@@ -410,46 +409,48 @@ braycurtisdistances<-
   # Remove the diagonal rows, where each sample was compared to itself
   filter(value!=0)
 
+# stats
+compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH")
+compare_means(data=braycurtisdistances, value~Station, method="kruskal")
+# filter out only significant p-values
+compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH") %>% 
+  filter(p.adj<=0.05)
+
+# plot within site variation
 braydistanceplot<-ggplot(braycurtisdistances, aes(x=Station, y=value, fill=Station))+
-  geom_jitter(width=0.15, size=2, shape=23, alpha=0.7)+
-  geom_boxplot(alpha=0.8)+
+  geom_jitter(width=0.15, size=2, shape=23, alpha=0.7)+geom_boxplot(alpha=0.8)+
   labs(x=NULL,y="within site dissimilarity index",fill="Site")+
   scale_color_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc")) +
   theme_bw()+scale_y_continuous(limits=c(0,1.19), labels=c("0.00","0.25","0.50","0.75","1.00"," "))+
-  theme(legend.position = "none",
-        strip.background = element_rect("grey90"))+
+  theme(legend.position = "none", strip.background = element_rect("grey90"))+
+  # add statistics
   geom_signif(comparisons = list(c("4.NAR","5.NIN"),c("1.PVD", "2.GB")), 
               map_signif_level=TRUE, vjust=0.5, y_position = c(1.05,1.05))+
   geom_signif(annotations = c("***"), y_position = 1.18, xmin=c(2), vjust=0.5, xmax=c(4.5),tip_length = c(0.08,0.04))+
   geom_signif(annotations = c("", ""), y_position = 1.15, xmin=c(1,4), xmax=c(3,5))+
+  # add global p-value
   stat_compare_means(label="p.format", label.y = 0.1, label.x="4.NAR", size=4)
   
-  
-compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH")
-compare_means(data=braycurtisdistances, value~Station, method="kruskal")
-
-compare_means(data=braycurtisdistances, value~Station, method="wilcox", p.adjust.method = "BH") %>% 
-  filter(p.adj<=0.05)
 
 
 ####
 ### + Build Figure 3 with cowplots ------------------------------------------
 ####
 
-gutleg<-get_legend(gutNMDS+scale_linetype_discrete(guide = FALSE))
-typeleg<-get_legend(typeNMDS+scale_shape_discrete(guide = FALSE))
-legends<-plot_grid(gutleg, typeleg, ncol = 2,rel_heights = c(20,50))
+legends<-plot_grid(get_legend(gutNMDS+scale_linetype_discrete(guide = FALSE)),
+                   get_legend(typeNMDS+scale_shape_discrete(guide = FALSE)),
+                   ncol = 2,rel_heights = c(20,50))
 
 divplot<-plot_grid(gutdiv,waterdiv)
 nmds<-plot_grid(gutNMDS+theme(legend.position = "none"),
                 typeNMDS+theme(legend.position = "none"),
                 align="hv", axis="t", nrow=1)
-bottombraydistance<-plot_grid(braydistanceplot, legends)
+braydistance_legends<-plot_grid(braydistanceplot, legends)
 
 plot_grid(divplot+theme(plot.margin = margin(0, 0, 0, 7)),
           nmds+draw_label("Bray-Curtis beta diversity (k=2)", size=11, x=0, y=0.5, angle=90), 
-          bottombraydistance+draw_label("Bray-Curtis beta diversity", size=11, x=0, y=0.55, angle=90),
+          braydistance_legends+draw_label("Bray-Curtis beta diversity", size=11, x=0, y=0.55, angle=90),
           nrow=3, align="v", axis="tl",rel_heights = c(50,60,50),
           labels = "AUTO")
 #ggsave("Figure3.png", width = 8, height = 9, dpi=400)
@@ -459,7 +460,7 @@ plot_grid(divplot+theme(plot.margin = margin(0, 0, 0, 7)),
 
 
 ####
-### Table SXX. Beta diversity stats -----------------------------------------------------
+### Table S2. Beta diversity stats -----------------------------------------------------
 ####
 
 beta<-NULL
@@ -498,7 +499,7 @@ beta %>% bind_rows() %>% rownames_to_column() %>% mutate(comparison=betanames) %
 
 
 ####
-### Figure SXX and Table SXX. Core Microbiome ----------------------------------------------
+### Figure S6 and Table S3. Core Microbiome ----------------------------------------------
 ####
 
 coretaxa<-dataASVwide %>%

@@ -1,6 +1,6 @@
 # Stevick et al 2020 Oyster Gut Microbiome Function in an Estuary
 # Compare taxonomy generated from RefSeq/metatranscriptomes and 16S data
-# Figures 4, S2, S3, and S5 in the publication
+# Figures 4, S2, S3, S5, and S6. Table S3
 # updated 9/17/2020 for reresubmission
 
 # Metaranscriptomic taxonomy data
@@ -142,24 +142,25 @@ toptax<-alldatatax_norm %>% group_by(Order) %>%
 
 topdatatax_norm <- filter(alldatatax_norm, Order %in% toptax)
 
-ggplot(topdatatax_norm, aes(Sample, Order)) +
+heatmap<-ggplot(topdatatax_norm, aes(Sample, Order)) +
   geom_tile(aes(fill = rescale),colour = "white") + ggpubr::theme_transparent() +
   facet_grid(factor(Phylum, levels=c("Actinobacteria","Bacteroidetes","Cyanobacteria","Firmicutes","Fusobacteria",
                                      "Proteobacteria","Tenericutes","Verrucomicrobia","Unknown"))~
                factor(SampleType, levels = c("water","gut"))+Method+Station,
-             space="free", scales="free")+
+             space="free", scales="free", switch="x")+
   scale_fill_gradientn(na.value = "salmon",labels = scales::percent,limits=c(0,1),
                        colours=c("white","#fecc5c","#fd8d3c","#f03b20","#bd0026","darkred"))+
   scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) +
-  theme(legend.position = "bottom",axis.ticks = element_blank(),
+  theme(legend.position = c(-0.24,-0.06),legend.direction = "horizontal",
+        axis.ticks = element_blank(),
         axis.text.y = element_text(size=10, colour="grey40"),
         axis.text.x = element_blank(),
         legend.text = element_text(size=10, colour="grey40"),
-        legend.key.size = unit(2, 'lines'),
+        legend.key.size = unit(1.5, 'lines'),legend.title = element_text(size=11, colour="grey40"),
         panel.background = element_rect(fill="white", colour="white"),
         strip.background = element_rect(fill="white", colour="white"),
-        strip.text = element_text(size=8, colour="grey40"))+
-  labs(y="Most abundant taxa (Order level)", x=NULL, fill="Relative\nPercent\nAbundance")
+        strip.text.y = element_blank())+
+  labs(y="Most abundant taxa (Order level)", x=NULL, fill="Relative Percent \nAbundance of Order")
 # 1030x550
 
 
@@ -194,14 +195,14 @@ guttrans<-guttrans[2:68]
 
 # simple venn diagrams
 venn(list(gut16S=gut16S, water16S=water16S))
-siteshey<-venn(list("1.PVD Gut 16S"=gut16S1,
+sitestogether<-venn(list("1.PVD Gut 16S"=gut16S1,
           "2.GB Gut 16S"=gut16S2,
           "3.BIS Gut 16S"=gut16S3,
           "4.NAR Gut 16S"=gut16S4,
           "5.NIN Gut 16S"=gut16S5))
-hey<- venn(list("gut 16S"=gut16S, "water 16S"=water16S, "gut metatranscriptome"=guttrans))
-summaryvenn<-attr(hey, "intersections")
-summaryvennsites<-attr(siteshey, "intersections")
+vennlist<- venn(list("gut 16S"=gut16S, "water 16S"=water16S, "gut metatranscriptome"=guttrans))
+summaryvenn<-attr(vennlist, "intersections")
+summaryvennsites<-attr(sitestogether, "intersections")
 
 set1 <- guttrans
 set2 <- gut16S
@@ -225,7 +226,7 @@ UpSet(t(m), set_order = order(c("water16S","gutRNA","gut16S")),
 ####
 
 
-UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")),
+top<-UpSet(m, set_order = order(c("water16S","gutRNA","gut16S")),
       pt_size = unit(.35, "cm"),lwd=3,
       left_annotation = rowAnnotation(" " = anno_barplot(set_size(m), bar_width=0.7,
                             axis_param = list(direction = "reverse", side = "top",labels_rot = 0),
@@ -243,7 +244,6 @@ read_sets = list("1.PVD Gut 16S"=gut16S1,
                  "5.NIN Gut 16S"=gut16S5,
                  "All water 16S"=water16S)
 mgutw = make_comb_mat(read_sets)
-
 
 
 ####
@@ -276,11 +276,11 @@ UpSet(mgutw,comb_col = c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc","grey
 
 ### + NMDS of Metatranscriptome taxonomy -----------------
 
-Site<-c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
+Site<-as.factor(c("1.PVD","1.PVD","1.PVD","1.PVD","1.PVD",
           "2.GB","2.GB","2.GB","2.GB","2.GB",
           "3.BIS","3.BIS","3.BIS","3.BIS","3.BIS",
           "4.NAR","4.NAR","4.NAR","4.NAR","4.NAR",
-          "5.NIN","5.NIN","5.NIN","5.NIN","5.NIN")
+          "5.NIN","5.NIN","5.NIN","5.NIN","5.NIN"))
 
 library(vegan)
 theme_set(theme_bw())
@@ -290,10 +290,6 @@ veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
   Circle <- cbind(cos(theta), sin(theta))
   t(center + scale * t(Circle %*% chol(cov)))
 }
-
-
-
-
 
 ####
 ### Figure S5A. Species level NMDS ----------------------------------------------
@@ -323,10 +319,11 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-metatranssp<-
-  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
-  geom_point(size=4, alpha=0.9,aes(shape=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
+spadonis2<-adonis2(abund_tablesp~Site, data=NMDS, by=NULL,method="bray", k=2)
+
+metatranssp<-ggplot(data=NMDS,aes(x,y)) +
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site,colour=Site), size=1) +
+  geom_point(size=4, alpha=0.9,aes(shape=Site,colour=Site,fill=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
   annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
@@ -334,10 +331,10 @@ metatranssp<-
   theme(legend.text = element_text(size=14, colour="gray20"),
         legend.position = "none",
         legend.title = element_blank(),legend.box="horizontal") +
-  ggtitle("Species level annotation")
-
-adonis2(abund_tablesp~Site, data=NMDS, by=NULL,method="bray", k=2)
-
+  ggtitle("Species level annotation")+
+  # add the global p-value from the adonis2 function
+  geom_text(data=spadonis2, aes(x=1,y=-0.5,label=paste("p=",`Pr(>F)`[1],"*")))
+  
 
 
 ####
@@ -368,28 +365,30 @@ for(g in levels(NMDS$Site)){
 head(df_ell)
 NMDS.mean=aggregate(NMDS[,1:2],list(group=NMDS$Site),mean)
 
-metatransord<-
-  ggplot(data=NMDS,aes(x,y,colour=Site,fill=Site))+theme_bw() +
-  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site), size=1) +
-  geom_point(size=4, alpha=0.9,aes(shape=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
+ordadonis2<-adonis2(abund_tableord~Site, data=NMDS, by=NULL,method="bray", k=2)
+
+metatransord<-ggplot(data=NMDS,aes(x,y))+
+  geom_path(data=df_ell, aes(x=NMDS1, y=NMDS2, lty=Site, colour=Site), size=1) +
+  geom_point(size=4, alpha=0.9,aes(shape=Site, colour=Site,fill=Site))+scale_shape_manual(values = c(21,22,23,24,25))+
   annotate("text",x=NMDS.mean$x,y=NMDS.mean$y,label=NMDS.mean$group,size=5, color="gray40") +
   scale_fill_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_colour_manual(values=c("#253494","#0868ac","#43a2ca","#7bccc4","#bae4bc"))+
   scale_linetype_manual(values=c("solid","dotted","twodash","longdash", "solid"), labels=c("1. Providence River", "2. Greenwich  Bay", "3. Bissel Cove", "4. Narrow River", "5. Ninigret Pond"))+
   theme(legend.text = element_text(size=14, colour="gray20"),
         legend.position = "right",
-        legend.title = element_blank(),legend.box="horizontal")+
-  ggtitle("Order level annotation")
+        legend.title = element_blank(),legend.box="vertical")+
+  ggtitle("Order level annotation")+
+  # add the global p-value from the adonis2 function
+  geom_text(data=ordadonis2, aes(x=0.6,y=-0.3,label=paste("p=",`Pr(>F)`[1],"**")))
 
-adonis2(abund_tableord~Site, data=NMDS, by=NULL,method="bray", k=2)
 
 ####
 ### + Combine Figure S5 ----------------------------------------------
 ####
 
 #1000x800
-cowplot::plot_grid(metatranssp, metatransord+theme(legend.position="none"),
-                   get_legend(metatransord))
+plot_grid(metatranssp,get_legend(metatransord), metatransord+theme(legend.position="none"),
+          ncol=2, rel_widths = c(50,10))
 
 
 ####
@@ -468,7 +467,7 @@ sd(coverage)
 
 
 ####
-### Figure SXX and Table SXX. Core Microbiome ----------------------------------------------
+### Figure S6 and Table S3. Core Microbiome ----------------------------------------------
 ####
 
 
@@ -533,6 +532,6 @@ plot_grid(core16splot, coremetatransplot,
   draw_label("RNA: Metatranscriptomes", size=11, x=1, y=0.3, angle=-90)+
   theme(plot.margin = margin(0, 10, 0, 0))
 
-ggsave("FigureSXX.png", width = 8, height = 12, dpi=400)
-ggsave("FigureSXX.pdf", width = 8, height = 12)
-ggsave("FigureSXX.svg", width = 8, height = 12)
+#ggsave("FigureS6.png", width = 8, height = 12, dpi=400)
+#ggsave("FigureS6.pdf", width = 8, height = 12)
+#ggsave("FigureS6.svg", width = 8, height = 12)
