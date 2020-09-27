@@ -1,7 +1,6 @@
 # Analysis bash scripts, processed data files, and R scripts for *Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary*
 
-## Code written by Rebecca Stevick, URI-GSO (contact: rjstevick (at) gmail.com)
-### Coauthors: Anton F. Post and Marta Gómez-Chiarri
+### Code written by Rebecca Stevick, URI-GSO (contact: rjstevick (at) gmail.com). *Coauthors*: Anton F. Post and Marta Gómez-Chiarri
 
 ### *Study of wild oysters and their gut microbiomes along the estuarine gradient of Narragansett Bay, Rhode Island, USA with 16S rRNA amplicon and metatranscriptome data.*
 
@@ -9,6 +8,9 @@ This repository contains the scripts, pre-processed sequencing data, and the R s
 
 ### To cite this work:
 Stevick, R. J. (2019). Oyster-Associated Microbial Community Dynamics (Doctoral dissertation, University of Rhode Island).
+
+### This repository has been archived on Zenodo. Access or cite the most recent release:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3825254.svg)](https://doi.org/10.5281/zenodo.3825254)
 
 --------------------------------------------------------------------------------
 
