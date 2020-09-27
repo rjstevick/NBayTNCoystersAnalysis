@@ -4,7 +4,7 @@ This folder contains all the processed data files from the analysis described in
 **Software used:** R v3.4.1
 
 #### Scripts
-- **Figure1_2_Table1.R** - makes the map of sites and PCA of environmental data, calculates environmental correlation coeffs for Table 1.
+- **Figure1_2_Table1.R** - map of sites and PCA of environmental data, calculates environmental correlation coeffs for Table 1.
 - **Figure3_S1_S2_S6.R** - 16S rRNA percent abundance barplots (including controls) (S1), rarefaction plots (S2), and alpha- and beta-diversity (3). 16S core microbiome (S6). Table S2 of beta-diversity stats.
 - **Figure4_S2_S3_S5_S6.R** - compares taxonomy generated from RefSeq/metatranscriptomes and 16S rRNA data with heatmaps and UpSetR plots (4 and S3). Metatranscriptome taxonomy rarefaction (S2) and beta-diversity plots (S5). Metatranscriptome core microbiome (S6).
 - **Figure5_6.R** - Metaranscriptomic functional data at pathway levels, subset for stress response (N vs S), nitrogen and phosphorus metabolism (each site vs mean) with barplots.

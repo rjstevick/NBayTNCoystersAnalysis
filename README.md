@@ -1,7 +1,7 @@
 # Analysis bash scripts, processed data files, and R scripts for *Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary*
 
 ## Code written by Rebecca Stevick, URI-GSO (contact: rjstevick (at) gmail.com)
-### Collaborators: Anton F. Post and Marta Gómez-Chiarri
+### Coauthors: Anton F. Post and Marta Gómez-Chiarri
 
 ### *Study of wild oysters and their gut microbiomes along the estuarine gradient of Narragansett Bay, Rhode Island, USA with 16S rRNA amplicon and metatranscriptome data.*
 
@@ -46,13 +46,13 @@ This folder contains all the processed data files from the analysis described in
 - DeSeq2 results for SEED functional annnotation of metatranscriptomes (North vs. South)
 #### 2. Metadata
 - Folder containing mapping files to create Figure 1
-- Metadata spreadsheet with oyster and environmental measurements
+- Metadata spreadsheet with oyster and environmental measurements  
 #### 3. Taxonomy (from [MetatranscriptomeAnalysis](/MetatranscriptomeAnalysis) & [16SampliconAnalysis](/16SampliconAnalysis))
 - 16S rRNA taxonomy results
 - LefSe analysis results for the 16S rRNA taxa at the order level
 - Metatranscriptomic annotation taxonomy results with RefSeq
 #### Scripts
-- **Figure1_2_Table1.R** - makes the map of sites and PCA of environmental data, calculates environmental correlation coeffs for Table 1.
+- **Figure1_2_Table1.R** - map of sites and PCA of environmental data, calculates environmental correlation coeffs for Table 1.
 - **Figure3_S1_S2_S6.R** - 16S rRNA percent abundance barplots (including controls) (S1), rarefaction plots (S2), and alpha- and beta-diversity (3). 16S core microbiome (S6). Table S2 of beta-diversity stats.
 - **Figure4_S2_S3_S5_S6.R** - compares taxonomy generated from RefSeq/metatranscriptomes and 16S rRNA data with heatmaps and UpSetR plots (4 and S3). Metatranscriptome taxonomy rarefaction (S2) and beta-diversity plots (S5). Metatranscriptome core microbiome (S6).
 - **Figure5_6.R** - Metaranscriptomic functional data at pathway levels, subset for stress response (N vs S), nitrogen and phosphorus metabolism (each site vs mean) with barplots.
