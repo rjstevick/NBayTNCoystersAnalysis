@@ -1,10 +1,8 @@
 # Analysis bash scripts, processed data files, and R scripts for *Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary*
 
-### Code written by Rebecca Stevick, URI-GSO (contact: rjstevick (at) gmail.com). *Coauthors*: Anton F. Post and Marta Gómez-Chiarri
+#### *Study of wild oysters and their gut microbiomes along the estuarine gradient of Narragansett Bay, Rhode Island, USA with 16S rRNA amplicon and metatranscriptome data.*
 
-### *Study of wild oysters and their gut microbiomes along the estuarine gradient of Narragansett Bay, Rhode Island, USA with 16S rRNA amplicon and metatranscriptome data.*
-
-This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635 [(reviewer link here)](https://dataview.ncbi.nlm.nih.gov/object/PRJNA598635?reviewer=5g8ftj52399ut5ujmj7v7t0hh8). The corresponding accession numbers for each sample are detailed in [`PRJNA598635_NCBI_info.xlsx`](/PRJNA598635_NCBI_info.xlsx). This file also includes file names and environmental data for each 16S rRNA amplicon or metatranscriptomic sample.
+This repository contains the scripts, pre-processed sequencing data, and the R script files to reproduce the figures in the manuscript. The raw sequences generated for this study can be found in the NCBI Short Read Archive under BioProject no. PRJNA598635. The corresponding accession numbers for each sample are detailed in [`PRJNA598635_NCBI_info.xlsx`](/PRJNA598635_NCBI_info.xlsx). This file also includes file names and environmental data for each 16S rRNA amplicon or metatranscriptomic sample.
 
 ### To cite this work:
 Stevick, R.J., Post, A.F. & Gómez-Chiarri, M (2021). Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary. *Animal Microbiome* 3, 5. https://doi.org/10.1186/s42523-020-00066-0
