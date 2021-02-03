@@ -27,4 +27,4 @@ This folder contains all the processed data files from the analysis described in
 - Metatranscriptomic annotation taxonomy results with RefSeq
 
 ### To cite this work:
-Stevick, R. J. (2019). Oyster-Associated Microbial Community Dynamics (Doctoral dissertation, University of Rhode Island).
+Stevick, R.J., Post, A.F. & Gómez-Chiarri, M (2021). Functional plasticity in oyster gut microbiomes along a eutrophication gradient in an urbanized estuary. *Animal Microbiome* 3, 5. https://doi.org/10.1186/s42523-020-00066-0
